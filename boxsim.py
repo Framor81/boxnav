@@ -84,7 +84,7 @@ def main():
     argparser.add_argument("--collect", action="store_true", help="Collect images.")
     argparser.add_argument("--dataset_path", type=str, help="Path to dataset.")
     argparser.add_argument("--ue_image_path", type=str, help="Path to UE image.")
-    argparser.add_argument("--port", type=str, help="Port number to port through.")
+    argparser.add_argument("--port", type=int, help="Port number to port through.")
     args = argparser.parse_args()
 
     if args.collect and not args.ue:
@@ -99,8 +99,6 @@ def main():
     # Check port/set default
     if args.port == None: 
         args.port = 9000
-    else:
-        args.port = int(args.port)
 
     simulate(args, args.dataset_path, args.ue_image_path)
 
