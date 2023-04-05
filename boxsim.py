@@ -48,7 +48,7 @@ def simulate(args: Namespace, dataset_path: str, ue_image_path: str):
             agent,
             dataset_path,
             ue_image_path,
-            port=8500,
+            args.port,
             save_images=args.collect,
         )
 
@@ -84,6 +84,7 @@ def main():
     argparser.add_argument("--collect", action="store_true", help="Collect images.")
     argparser.add_argument("--dataset_path", type=str, help="Path to dataset.")
     argparser.add_argument("--ue_image_path", type=str, help="Path to UE image.")
+    argparser.add_argument("--port", type=int, help="Port number to port through.")
     args = argparser.parse_args()
 
     if args.collect and not args.ue:
@@ -94,6 +95,10 @@ def main():
 
     if args.collect and not args.ue_image_path:
         raise ValueError("Must provide a UE image path to collect data.")
+    
+    # Check port/set default
+    if args.port == None: 
+        args.port = 9000
 
     simulate(args, args.dataset_path, args.ue_image_path)
 

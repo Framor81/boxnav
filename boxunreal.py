@@ -14,7 +14,7 @@ class UENavigatorWrapper:
         navigator: BoxNavigatorBase,
         dataset_path: str,
         ue_image_path: str,
-        port: int = 8500,
+        port: int = 9000,
         save_images: bool = False,
     ) -> None:
 
@@ -82,7 +82,7 @@ class UENavigatorWrapper:
 
         if action_taken == Action.FORWARD:
             self.ue5.forward(
-                self.navigator.translation_increment
+                #self.navigator.translation_increment
             )  # TODO: this argument was removed from ue5env
         elif action_taken == Action.BACKWARD:
             self.ue5.back(self.navigator.translation_increment)
