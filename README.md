@@ -7,7 +7,7 @@ A simple playground for making an agent navigate around some directed corridors 
 ## Getting Started in Unreal Engine
 
 ### Dependencies
-Create or open an unreal engine project. Ensure you have the [unrealcv]https://github.com/unrealcv/unrealcv plugin file copied into your current project. Ensure you also have the [ue5env]https://github.com/arcslaboratory/ue5env library downloaded. 
+Create or open an unreal engine project. Ensure you have the [unrealcv](https://github.com/unrealcv/unrealcv) plugin file copied into your current project. Ensure you also have the [ue5env](https://github.com/arcslaboratory/ue5env) library downloaded. 
 
 ### Beginning the Simulation
 Clone this repository. Move into the cloned boxenv directory. Press play on your Unreal Engine project.
