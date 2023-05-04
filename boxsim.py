@@ -79,12 +79,12 @@ def main():
 
     argparser = ArgumentParser("Navigate around a box environment.")
     argparser.add_argument("--anim_type", type=str, help="Extension for output format.")
-    argparser.add_argument("--navigator", type=str, help="Navigator to run.")
+    argparser.add_argument("navigator", type=str, help="Navigator to run.")
     argparser.add_argument("--ue", action="store_true", help="Connect to UnrealEngine.")
-    argparser.add_argument("--collect", action="store_true", help="Collect images.")
-    argparser.add_argument("--dataset_path", type=str, help="Path to dataset.")
-    argparser.add_argument("--ue_image_path", type=str, help="Path to UE image.")
     argparser.add_argument("--port", type=int, help="Port number to port through.")
+    argparser.add_argument("--collect", action="store_true", help="Collect images.")
+    argparser.add_argument("dataset_path", type=str, help="Path to dataset.")
+    argparser.add_argument("ue_image_path", type=str, help="Path to UE image.")
     args = argparser.parse_args()
 
     if args.collect and not args.ue:
