@@ -1,4 +1,4 @@
-from ue5env import UE5EnvWrapper
+from ue5osc import Communicator
 from boxnavigator import Action, BoxNavigatorBase
 
 from math import degrees
