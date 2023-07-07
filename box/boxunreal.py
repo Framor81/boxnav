@@ -13,16 +13,22 @@ class UENavigatorWrapper:
         self,
         navigator: BoxNavigatorBase,
         dataset_path: str,
-        ue_image_path: str,
-        port: int = 9000,
+        # ue_image_path: str,
+        # port: int = 9000,
+        py_server_port: int = 7001,
+        ue_server_port: int = 7447,
         save_images: bool = False,
     ) -> None:
-
-        self.ue5 = UE5EnvWrapper(port)
+        self.ue5 = Communicator(
+            "127.0.0.1",
+            ue_server_port,
+            py_server_port,
+            Path(".").expanduser() / "images",
+        )
 
         self.navigator = navigator
         self.dataset_path = Path(dataset_path)
-        self.ue_image_path = Path(ue_image_path)
+        # self.ue_image_path = Path(ue_image_path)
         self.save_images = save_images
 
         # Sync UE and boxsim
@@ -48,12 +54,12 @@ class UENavigatorWrapper:
         """Move UE agent to match boxsim agent."""
 
         # Get z position from UE
-        _, _, unreal_z = self.ue5.get_camera_location(0)
+        _, _, unreal_z = self.ue5.get_location()
 
         # Get x, y position from boxsim
         x, y = self.navigator.position.xy()
 
-        self.ue5.set_camera_location(x, y, unreal_z)
+        self.ue5.set_location(x, y, unreal_z)
 
     # def sync_box_position_to_unreal(self) -> None:
     #     """Move Boxsim agent to match Unreal Agent Position"""
@@ -64,7 +70,7 @@ class UENavigatorWrapper:
         """Sync UE agent location to box agent."""
         # Conversion from Box to unreal location is (180 - boxYaw) = unrealYaw
         unreal_yaw: float = degrees(self.navigator.rotation)
-        self.ue5.set_camera_yaw(unreal_yaw, 0)
+        self.ue5.set_yaw(unreal_yaw)
 
     def take_action(self) -> tuple[Action, Action]:
         """Execute action in the navigator and in the UE agent.
@@ -81,11 +87,9 @@ class UENavigatorWrapper:
             self.save_image(correct_action)
 
         if action_taken == Action.FORWARD:
-            self.ue5.forward(
-                #self.navigator.translation_increment
-            )  # TODO: once forward and back functions fixed, update accordingly
+            self.ue5.move_forward(self.navigator.translation_increment)
         elif action_taken == Action.BACKWARD:
-            self.ue5.back(self.navigator.translation_increment)
+            self.ue5.move_backward(self.navigator.translation_increment)
         elif action_taken == Action.ROTATE_LEFT:
             self.sync_rotation()
         elif action_taken == Action.ROTATE_RIGHT:
@@ -96,7 +100,6 @@ class UENavigatorWrapper:
         return action_taken, correct_action
 
     def save_image(self, action: Action) -> None:
-
         # Rotations are swapped in UE
         if action == Action.ROTATE_LEFT:
             action = Action.ROTATE_RIGHT
@@ -110,11 +113,11 @@ class UENavigatorWrapper:
         self.images_saved += 1
 
         # Tell UE to save an image
-        self.ue5.save_image(0)
+        self.ue5.save_image(image_filepath)
 
         # Sleep to give time for the image to save
         # TODO: maybe loop until the image exists?
-        sleep(2)
+        sleep(0.5)
 
         # Move the UE image to the dataset directory
-        self.ue_image_path.rename(image_filepath)
+        # self.ue_image_path.rename(image_filepath)
