@@ -1,10 +1,11 @@
 import math
 from argparse import ArgumentParser, Namespace
 
-from boxunreal import UENavigatorWrapper
-from box import Box, Pt
-from boxenv import BoxEnv
-from boxnavigator import PerfectNavigator, WanderingNavigator
+# from boxunreal import UENavigatorWrapper
+from box.boxunreal import UENavigatorWrapper
+from box.box import Box, Pt
+from box.boxenv import BoxEnv
+from box.boxnavigator import PerfectNavigator, WanderingNavigator
 
 import matplotlib.pyplot as plt
 from celluloid import Camera
@@ -23,7 +24,7 @@ boxes = [
 ]
 
 
-def simulate(args: Namespace, dataset_path: str, ue_image_path: str):
+def simulate(args: Namespace, dataset_path: str):
     """Create and update the box environment and run the navigator."""
 
     env = BoxEnv(boxes)
@@ -47,17 +48,14 @@ def simulate(args: Namespace, dataset_path: str, ue_image_path: str):
         agent = UENavigatorWrapper(
             agent,
             dataset_path,
-            ue_image_path,
-            args.port,
+            py_server_port=args.py_port,
+            ue_server_port=args.ue_port,
             save_images=args.collect,
         )
 
     fig, ax = plt.subplots()
     camera = Camera(fig)
-
-    max_actions_to_take = 20
-    num_actions_taken = 0
-    while not agent.at_final_target() and num_actions_taken < max_actions_to_take:
+    while not agent.at_final_target() and agent.num_actions_taken() < args.max_actions:
         action_taken, correct_action = agent.take_action()
 
         if args.anim_type:
@@ -65,8 +63,17 @@ def simulate(args: Namespace, dataset_path: str, ue_image_path: str):
             agent.display(ax, env.scale)
             ax.invert_xaxis()
             camera.snap()
+    if args.ue:
+        agent.ue5.close_osc()
 
-    print(f"Simulation complete, it took {num_actions_taken} actions to reach the end.")
+    if agent.at_final_target():
+        print(
+            f"Simulation complete, it took {agent.num_actions_taken()} actions to reach the end."
+        )
+    else:
+        print(
+            f"Agent was not able to reach target within {agent.num_actions_taken()} actions."
+        )
 
     if args.anim_type:
         print("Saving animation...")
@@ -78,13 +85,22 @@ def main():
     """Parse arguments and run simulation."""
 
     argparser = ArgumentParser("Navigate around a box environment.")
-    argparser.add_argument("--anim_type", type=str, help="Extension for output format.")
     argparser.add_argument("navigator", type=str, help="Navigator to run.")
-    argparser.add_argument("--ue", action="store_true", help="Connect to UnrealEngine.")
-    argparser.add_argument("--port", type=int, help="Port number to port through.")
-    argparser.add_argument("--collect", action="store_true", help="Collect images.")
     argparser.add_argument("dataset_path", type=str, help="Path to dataset.")
-    argparser.add_argument("ue_image_path", type=str, help="Path to UE image.")
+
+    argparser.add_argument("--anim_type", type=str, help="Extension for output format.")
+    argparser.add_argument("--ue", action="store_true", help="Connect to UnrealEngine.")
+    argparser.add_argument(
+        "--py_port", type=int, default=7001, help="Python OSC server port."
+    )
+    argparser.add_argument(
+        "--ue_port", type=int, default=7447, help="UE OSC server port."
+    )
+    argparser.add_argument("--collect", action="store_true", help="Collect images.")
+    argparser.add_argument("--resolution", type=str, help="Set resolution of images.")
+    argparser.add_argument(
+        "--max_actions", type=int, default=50, help="Maxiumum actions to take."
+    )
     args = argparser.parse_args()
 
     if args.collect and not args.ue:
@@ -93,15 +109,17 @@ def main():
     if args.collect and not args.dataset_path:
         raise ValueError("Must provide a dataset path to collect data.")
 
-    if args.collect and not args.ue_image_path:
-        raise ValueError("Must provide a UE image path to collect data.")
-    
     # Check port/set default
-    if args.port == None: 
-        args.port = 9000
+    # if args.port == None:
+    #     args.port = 9000
 
-    simulate(args, args.dataset_path, args.ue_image_path)
+    simulate(args, args.dataset_path)
 
 
 if __name__ == "__main__":
+    # try:
     main()
+    print("Done")
+    # except Exception as e:
+    #     print(e)
+    #     raise SystemExit
