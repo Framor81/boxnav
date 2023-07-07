@@ -1,6 +1,6 @@
 from random import random, choice
-from box import Pt
-from boxenv import BoxEnv
+from .box import Pt
+from .boxenv import BoxEnv
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arrow, Wedge

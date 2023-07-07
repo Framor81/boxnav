@@ -1,7 +1,8 @@
 import math
 from argparse import ArgumentParser, Namespace
 
-from boxunreal import UENavigatorWrapper
+# from boxunreal import UENavigatorWrapper
+from box.boxunreal import UENavigatorWrapper
 from box import Box, Pt
 from boxenv import BoxEnv
 from boxnavigator import PerfectNavigator, WanderingNavigator
@@ -95,9 +96,9 @@ def main():
 
     if args.collect and not args.ue_image_path:
         raise ValueError("Must provide a UE image path to collect data.")
-    
+
     # Check port/set default
-    if args.port == None: 
+    if args.port == None:
         args.port = 9000
 
     simulate(args, args.dataset_path, args.ue_image_path)

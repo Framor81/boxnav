@@ -1,6 +1,5 @@
 from ue5osc import Communicator
-from boxnavigator import Action, BoxNavigatorBase
-
+from .boxnavigator import Action, BoxNavigatorBase
 from math import degrees
 from pathlib import Path
 from time import sleep
