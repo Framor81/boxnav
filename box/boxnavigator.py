@@ -72,6 +72,8 @@ class BoxNavigatorBase:
         self.translation_increment = 50
         self.rotation_increment = radians(5)
 
+        self.actions_taken = 0
+
     def at_final_target(self) -> bool:
         """Is the navigator at the final target."""
         return close_enough(
@@ -102,6 +104,9 @@ class BoxNavigatorBase:
 
         return action
 
+    def num_actions_taken(self) -> int:
+        return self.actions_taken
+
     def take_action(self) -> tuple[Action, Action]:
         """Execute a single action in the environment.
 
@@ -111,6 +116,7 @@ class BoxNavigatorBase:
         self.update_target_if_needed()
 
         action_taken = self.navigator_specific_action()
+        self.actions_taken += 1
         correct_action = self.correct_action()
 
         if action_taken == Action.FORWARD:
@@ -203,7 +209,11 @@ class PerfectNavigator(BoxNavigatorBase):
     """A "perfect" navigator that does not make mistakes."""
 
     def __init__(
-        self, position: Pt, rotation: float, env: BoxEnv, out_of_bounds: bool
+        self,
+        position: Pt,
+        rotation: float,
+        env: BoxEnv,
+        out_of_bounds: bool,
     ) -> None:
         super().__init__(position, rotation, env, out_of_bounds)
 

@@ -40,6 +40,9 @@ class UENavigatorWrapper:
 
         self.images_saved = 0
 
+    def num_actions_taken(self):
+        return self.navigator.num_actions_taken()
+
     def at_final_target(self):
         return self.navigator.at_final_target()
 
