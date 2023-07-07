@@ -97,7 +97,7 @@ def main():
         "--ue_port", type=int, default=7447, help="UE OSC server port."
     )
     argparser.add_argument("--collect", action="store_true", help="Collect images.")
-
+    argparser.add_argument("--resolution", type=str, help="Set resolution of images.")
     argparser.add_argument(
         "--max_actions", type=int, default=50, help="Maxiumum actions to take."
     )
