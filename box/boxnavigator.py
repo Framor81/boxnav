@@ -80,7 +80,7 @@ class BoxNavigatorBase:
             self.position, self.env.boxes[-1].target, self.distance_threshold
         )
 
-    def correct_action(self):
+    def correct_action(self) -> Action:
         # TODO: docstring
         # TODO: cache this result?
 
