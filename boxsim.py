@@ -15,11 +15,11 @@ from celluloid import Camera
 boxes = [
     Box(Pt(-185, 1060), Pt(420, 1060), Pt(420, -350), Pt(10, 420)),
     Box(Pt(-1110, 590), Pt(420, 590), Pt(420, 245), Pt(-770, 420)),
-    # Box(Pt(-855, -100), Pt(-855, 590), Pt(-700, 590), Pt(-780, 0)),
-    # Box(Pt(-700, 65), Pt(-700, -100), Pt(-4690, -100), Pt(-4500, -32)),
-    # Box(Pt(-4690, 65), Pt(-4415, 65), Pt(-4415, -2400), Pt(-4570, -433)),
-    # Box(Pt(-4415, -295), Pt(-4415, -640), Pt(-5755, -640), Pt(-5590, -450)),
-    # Box(Pt(-5530, -2400), Pt(-5755, -2400), Pt(-5755, 2845), Pt(-5655, 1983)),
+    Box(Pt(-855, -100), Pt(-855, 590), Pt(-700, 590), Pt(-780, 0)),
+    Box(Pt(-700, 65), Pt(-700, -100), Pt(-4690, -100), Pt(-4500, -32)),
+    Box(Pt(-4690, 65), Pt(-4415, 65), Pt(-4415, -2400), Pt(-4570, -433)),
+    Box(Pt(-4415, -295), Pt(-4415, -640), Pt(-5755, -640), Pt(-5590, -450)),
+    Box(Pt(-5530, -2400), Pt(-5755, -2400), Pt(-5755, 2845), Pt(-5655, 1983)),
     # Box(Pt(-5755, 1680), Pt(-5755, -2350), Pt(-4600, 2350), Pt(-5000, 1983)),
 ]
 
@@ -56,7 +56,11 @@ def simulate(args: Namespace, dataset_path: str) -> None:
     fig, ax = plt.subplots()
     camera = Camera(fig)
     while not agent.at_final_target() and agent.num_actions_taken() < args.max_actions:
-        action_taken, correct_action = agent.take_action()
+        try:
+            action_taken, correct_action = agent.take_action()
+        except TimeoutError as e:
+            agent.close_osc()
+            raise SystemExit
 
         if args.anim_type:
             env.display(ax)

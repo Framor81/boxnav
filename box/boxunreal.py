@@ -31,9 +31,17 @@ class UENavigatorWrapper:
         # self.ue_image_path = Path(ue_image_path)
         self.save_images = save_images
 
-        # Sync UE and boxsim
-        self.sync_positions()
-        self.sync_rotation()
+        try:
+            # Sync UE and boxsim
+            self.sync_positions()
+            self.sync_rotation()
+        except TimeoutError as e:
+            self.ue5.close_osc()
+            print(
+                "Received Timeout Error from OSC Communicator. Check if UE packaged game is running."
+            )
+            raise SystemExit
+
         self.reset()
 
         # Create the dataset directory if it doesn't exist
@@ -41,21 +49,13 @@ class UENavigatorWrapper:
 
         self.images_saved = 0
 
-    def num_actions_taken(self) -> int:
-        """Returns how many actions the agent has taken towards its final target."""
-        return self.navigator.num_actions_taken()
-
-    def at_final_target(self) -> bool:
-        """Returns whether the agent reached its final target or not."""
-        return self.navigator.at_final_target()
-
-    def display(self, ax, scale) -> None:
-        """Used to display the environment and agent in a 2D animation."""
-        return self.navigator.display(ax, scale)
-
     def reset(self) -> None:
         """Resets agent to its initial position."""
         return self.ue5.reset()
+
+    def __getattr__(self, attr):
+        """Dispath unknown method calls to navigator object."""
+        return getattr(self.navigator, attr)
 
     def sync_positions(self) -> None:
         """Move UE agent to match boxsim agent."""
