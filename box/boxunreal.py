@@ -19,12 +19,7 @@ class UENavigatorWrapper:
         ue_server_port: int = 7447,
         save_images: bool = False,
     ) -> None:
-        self.ue5 = Communicator(
-            "127.0.0.1",
-            ue_server_port,
-            py_server_port,
-            Path(".").expanduser() / "images",
-        )
+        self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
 
         self.navigator = navigator
         self.dataset_path = Path(dataset_path)
