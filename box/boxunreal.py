@@ -3,6 +3,7 @@ from .boxnavigator import Action, BoxNavigatorBase
 from math import degrees
 from pathlib import Path
 from time import sleep
+import os
 
 
 class UENavigatorWrapper:
@@ -18,21 +19,24 @@ class UENavigatorWrapper:
         ue_server_port: int = 7447,
         save_images: bool = False,
     ) -> None:
-        self.ue5 = Communicator(
-            "127.0.0.1",
-            ue_server_port,
-            py_server_port,
-            Path(".").expanduser() / "images",
-        )
+        self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
 
         self.navigator = navigator
         self.dataset_path = Path(dataset_path)
         # self.ue_image_path = Path(ue_image_path)
         self.save_images = save_images
 
-        # Sync UE and boxsim
-        self.sync_positions()
-        self.sync_rotation()
+        try:
+            # Sync UE and boxsim
+            self.sync_positions()
+            self.sync_rotation()
+        except TimeoutError as e:
+            self.ue5.close_osc()
+            print(
+                "Received Timeout Error from OSC Communicator. Check if UE packaged game is running."
+            )
+            raise SystemExit
+
         self.reset()
 
         # Create the dataset directory if it doesn't exist
@@ -40,17 +44,13 @@ class UENavigatorWrapper:
 
         self.images_saved = 0
 
-    def num_actions_taken(self):
-        return self.navigator.num_actions_taken()
-
-    def at_final_target(self):
-        return self.navigator.at_final_target()
-
-    def display(self, ax, scale):
-        return self.navigator.display(ax, scale)
-
-    def reset(self):
+    def reset(self) -> None:
+        """Resets agent to its initial position."""
         return self.ue5.reset()
+
+    def __getattr__(self, attr):
+        """Dispath unknown method calls to navigator object."""
+        return getattr(self.navigator, attr)
 
     def sync_positions(self) -> None:
         """Move UE agent to match boxsim agent."""
@@ -110,8 +110,9 @@ class UENavigatorWrapper:
 
         # Generate the next filename
         image_filepath = (
-            self.dataset_path / f"{self.images_saved:06}_{str(action).lower()}.png"
+            f"{self.dataset_path}/" f"{self.images_saved:06}_{str(action).lower()}.png"
         )
+
         self.images_saved += 1
 
         # Tell UE to save an image
