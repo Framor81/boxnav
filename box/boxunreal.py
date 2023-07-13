@@ -1,9 +1,10 @@
-from ue5osc import Communicator
-from .boxnavigator import Action, BoxNavigatorBase
 from math import degrees
 from pathlib import Path
 from time import sleep
-import os
+
+from ue5osc import Communicator
+
+from .boxnavigator import Action, BoxNavigatorBase
 
 
 class UENavigatorWrapper:
@@ -13,11 +14,8 @@ class UENavigatorWrapper:
         self,
         navigator: BoxNavigatorBase,
         dataset_path: str,
-        # ue_image_path: str,
-        # port: int = 9000,
-        py_server_port: int = 7001,
-        ue_server_port: int = 7447,
-        save_images: bool = False,
+        py_server_port: int,
+        ue_server_port: int,
     ) -> None:
         self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
 

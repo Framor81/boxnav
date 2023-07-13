@@ -1,12 +1,12 @@
-from random import random, choice
-from .box import Pt
-from .boxenv import BoxEnv
+from enum import Enum
+from math import cos, degrees, radians, sin
+from random import choice, random
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arrow, Wedge
 
-from enum import Enum
-from math import sin, cos, degrees, radians
+from .box import Pt
+from .boxenv import BoxEnv
 
 
 def close_enough(A: Pt, B: Pt, threshold: float = 1) -> bool:
@@ -43,7 +43,11 @@ class BoxNavigatorBase:
     """
 
     def __init__(
-        self, position: Pt, rotation: float, env: BoxEnv, out_of_bounds: bool = False
+        self,
+        position: Pt,
+        rotation: float,
+        env: BoxEnv,
+        allow_out_of_bounds: bool = False,
     ) -> None:
         """Initialize member variables for any navigator.
 
@@ -51,12 +55,13 @@ class BoxNavigatorBase:
             position (Pt): initial position
             rotation (float): initial rotation in radians
             env (BoxEnv): box environment
+            allow_out_of_bounds (bool, optional): whether to allow the navigator to go out of bounds. Defaults to False.
         """
         self.env = env
         self.position = position
         self.rotation = rotation
 
-        self.allow_out_of_bounds = out_of_bounds
+        self.allow_out_of_bounds = allow_out_of_bounds
 
         self.target = self.env.boxes[0].target
         # experimental:
@@ -213,9 +218,9 @@ class PerfectNavigator(BoxNavigatorBase):
         position: Pt,
         rotation: float,
         env: BoxEnv,
-        out_of_bounds: bool,
+        allow_out_of_bounds: bool,
     ) -> None:
-        super().__init__(position, rotation, env, out_of_bounds)
+        super().__init__(position, rotation, env, allow_out_of_bounds)
 
     def navigator_specific_action(self) -> Action:
         """The perfect navigator always chooses the correct action."""
@@ -232,10 +237,10 @@ class WanderingNavigator(BoxNavigatorBase):
         position: Pt,
         rotation: float,
         env: BoxEnv,
-        out_of_bounds: bool,
+        allow_out_of_bounds: bool,
         chance_of_random_action: float = 0.25,
     ) -> None:
-        super().__init__(position, rotation, env, out_of_bounds)
+        super().__init__(position, rotation, env, allow_out_of_bounds)
         self.possible_actions = [
             Action.FORWARD,
             Action.ROTATE_LEFT,

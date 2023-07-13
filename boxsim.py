@@ -1,14 +1,13 @@
 import math
 from argparse import ArgumentParser, Namespace
 
-# from boxunreal import UENavigatorWrapper
-from box.boxunreal import UENavigatorWrapper
+import matplotlib.pyplot as plt
+from celluloid import Camera
+
 from box.box import Box, Pt
 from box.boxenv import BoxEnv
 from box.boxnavigator import PerfectNavigator, WanderingNavigator
-
-import matplotlib.pyplot as plt
-from celluloid import Camera
+from box.boxunreal import UENavigatorWrapper
 
 # TODO: this should probably be a command line argument (pass in a list of coordinates)
 # route 2, uses path w/ water fountain & stairs
@@ -28,10 +27,10 @@ boxes = [
 def simulate(args: Namespace, dataset_path: str) -> None:
     """Create and update the box environment and run the navigator."""
 
-    env = BoxEnv(boxes)
+    box_world = BoxEnv(boxes)
 
-    agent_position = Pt(0, 0)
-    agent_rotation = math.radians(90)
+    initial_position = Pt(0, 0)
+    initial_rotation = math.radians(90)
 
     if args.navigator == "wandering":
         NavigatorConstructor = WanderingNavigator
@@ -41,7 +40,7 @@ def simulate(args: Namespace, dataset_path: str) -> None:
         raise ValueError("Invalid value for navigator.")
 
     agent = NavigatorConstructor(
-        agent_position, agent_rotation, env, out_of_bounds=args.ue
+        initial_position, initial_rotation, box_world, allow_out_of_bounds=args.ue
     )
 
     # Wrap the agent in a UE wrapper if we're using UE
@@ -60,14 +59,16 @@ def simulate(args: Namespace, dataset_path: str) -> None:
         try:
             action_taken, correct_action = agent.take_action()
         except TimeoutError as e:
+            print(e)
             agent.ue5.close_osc()
             raise SystemExit
 
         if args.anim_type:
-            env.display(ax)
-            agent.display(ax, env.scale)
+            box_world.display(ax)
+            agent.display(ax, box_world.scale)
             ax.invert_xaxis()
             camera.snap()
+
     if args.ue:
         agent.ue5.close_osc()
 
@@ -83,49 +84,72 @@ def simulate(args: Namespace, dataset_path: str) -> None:
     if args.anim_type:
         print("Saving animation...")
         anim = camera.animate()
-        anim.save("output." + args.anim_type)  # type: ignore
+        anim.save("output." + args.anim_type)
 
 
 def main():
     """Parse arguments and run simulation."""
 
     argparser = ArgumentParser("Navigate around a box environment.")
-    argparser.add_argument("navigator", type=str, help="Navigator to run.")
-    argparser.add_argument("dataset_path", type=str, help="Path to dataset.")
 
-    argparser.add_argument("--anim_type", type=str, help="Extension for output format.")
-    argparser.add_argument("--ue", action="store_true", help="Connect to UnrealEngine.")
+    #
+    # Required arguments
+    #
+
+    argparser.add_argument("navigator", type=str, help="Navigator to run.")
+
+    #
+    # Optional arguments
+    #
+
+    argparser.add_argument("--anim_type", type=str, help="Output format for animation.")
+
+    argparser.add_argument(
+        "--max_actions", type=int, default=50, help="Maximum allowed actions."
+    )
+
+    argparser.add_argument(
+        "--save_images",
+        type=str,
+        help="Directory in which images should be saved (no images saved otherwise).",
+    )
+
+    argparser.add_argument(
+        "--ue", action="store_true", help="Connect and send command to Unreal Engine."
+    )
+
     argparser.add_argument(
         "--py_port", type=int, default=7001, help="Python OSC server port."
     )
+
     argparser.add_argument(
-        "--ue_port", type=int, default=7447, help="UE OSC server port."
+        "--ue_port", type=int, default=7447, help="Unreal Engine OSC server port."
     )
-    argparser.add_argument("--collect", action="store_true", help="Collect images.")
-    argparser.add_argument("--resolution", type=str, help="Set resolution of images.")
+
     argparser.add_argument(
-        "--max_actions", type=int, default=50, help="Maxiumum actions to take."
+        "--resolution", type=str, help="Set resolution of images as ResX."
     )
 
     args = argparser.parse_args()
 
-    if args.collect and not args.ue:
-        raise ValueError("Cannot collect data without connecting to UE.")
+    possible_navigators = ["wandering", "perfect"]
+    if args.navigator not in possible_navigators:
+        raise ValueError(
+            f"Invalid navigator type: {args.navigator}. Possible options: {'|'.join(possible_navigators)}"
+        )
 
-    if args.collect and not args.dataset_path:
-        raise ValueError("Must provide a dataset path to collect data.")
+    if args.save_images and not args.ue:
+        raise ValueError("Cannot collect data without connecting to Unreal Engine.")
 
-    # Check port/set default
-    # if args.port == None:
-    #     args.port = 9000
+    if (args.py_port or args.ue_port) and not args.ue:
+        raise ValueError("Ports are not necessary without Unreal Engine.")
 
-    simulate(args, args.dataset_path)
+    if args.resolution and not args.ue:
+        raise ValueError("Resolution is unnecessary without Unreal Engine.")
+
+    simulate(args, args.save_path)
 
 
 if __name__ == "__main__":
-    # try:
     main()
     print("Done")
-    # except Exception as e:
-    #     print(e)
-    #     raise SystemExit
