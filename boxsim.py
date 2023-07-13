@@ -12,15 +12,16 @@ from celluloid import Camera
 
 # TODO: this should probably be a command line argument (pass in a list of coordinates)
 # route 2, uses path w/ water fountain & stairs
+
 boxes = [
-    Box(Pt(5250, 100), Pt(4620, 100), Pt(4620, 1520), Pt(5250, 1520)),
-    Box(Pt(4800, 1060), Pt(4800, 700), Pt(3700, 1050), Pt(3700, 670)),
-    Box(Pt(3700, 1050), Pt(4190, 1050), Pt(3700, 250), Pt(4190, 250)),
-    Box(Pt(4200, 610), Pt(4200, 250), Pt(110, 540), Pt(110, 250)),
-    Box(Pt(120, 540), Pt(410, 540), Pt(120, -1980), Pt(410, -1980)),
-    Box(Pt(120, -1980), Pt(120, -1650), Pt(-1560, -1980), Pt(1560, -1650)),
-    Box(Pt(-1020, 2870), Pt(-670, 2870), Pt(-1020, -1950), Pt(-590, -1950))
-    # Box(Pt(-5755, 1680), Pt(-5755, -2350), Pt(-4600, 2350), Pt(-5000, 1983)),
+    Box(Pt(-185, 1250), Pt(420, 1250), Pt(420, -350), Pt(10, 650)),
+    Box(Pt(-1110, 775), Pt(420, 775), Pt(420, 450), Pt(-835, 650)),
+    Box(Pt(-910, 100), Pt(-910, 775), Pt(-750, 775), Pt(-820, 200)),
+    Box(Pt(-750, 340), Pt(-750, 100), Pt(-4800, 100), Pt(-4650, 150)),
+    Box(Pt(-4750, 340), Pt(-4480, 340), Pt(-4480, -2200), Pt(-4600, -2000)),
+    Box(Pt(-4480, -1935), Pt(-4480, -2200), Pt(-6450, -640), Pt(-5700, -2000)),
+    Box(Pt(-5525, -2200), Pt(-5830, -2200), Pt(-5830, 3025), Pt(-5780, 2550)),
+    # Box(Pt(-5525, 2800), Pt(-5525, 2300), Pt(-4600, 2300), Pt(-6100, 2600)),
 ]
 
 
@@ -59,7 +60,7 @@ def simulate(args: Namespace, dataset_path: str) -> None:
         try:
             action_taken, correct_action = agent.take_action()
         except TimeoutError as e:
-            agent.close_osc()
+            agent.ue5.close_osc()
             raise SystemExit
 
         if args.anim_type:
