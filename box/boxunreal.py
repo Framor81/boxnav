@@ -47,7 +47,7 @@ class UENavigatorWrapper:
         return self.ue5.reset()
 
     def __getattr__(self, attr):
-        """Dispath unknown method calls to navigator object."""
+        """Dispatch unknown method calls to navigator object."""
         return getattr(self.navigator, attr)
 
     def sync_positions(self) -> None:
