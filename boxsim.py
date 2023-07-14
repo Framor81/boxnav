@@ -5,7 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from celluloid import Camera
 
-from box.box import Box, Pt
+from box.box import Pt, box_from_wh
 from box.boxenv import BoxEnv
 from box.boxnavigator import PerfectNavigator, WanderingNavigator
 from box.boxunreal import UENavigatorWrapper
@@ -14,14 +14,16 @@ from box.boxunreal import UENavigatorWrapper
 # route 2, uses path w/ water fountain & stairs
 
 boxes = [
-    Box(Pt(-185, 1250), Pt(420, 1250), Pt(420, -350), Pt(10, 650)),
-    Box(Pt(-1110, 775), Pt(420, 775), Pt(420, 450), Pt(-835, 650)),
-    Box(Pt(-910, 100), Pt(-910, 775), Pt(-750, 775), Pt(-820, 200)),
+    # Box(Pt(-185, 1250), Pt(420, 1250), Pt(420, -350), Pt(10, 650)),
+    # Box(Pt(-1110, 775), Pt(420, 775), Pt(420, 450), Pt(-835, 650)),
+    # Box(Pt(-910, 100), Pt(-910, 775), Pt(-750, 775), Pt(-820, 200)),
     # Box(Pt(-750, 340), Pt(-750, 100), Pt(-4800, 100), Pt(-4650, 150)),
     # Box(Pt(-4750, 340), Pt(-4480, 340), Pt(-4480, -2200), Pt(-4600, -2000)),
     # Box(Pt(-4480, -1935), Pt(-4480, -2200), Pt(-6450, -640), Pt(-5700, -2000)),
     # Box(Pt(-5525, -2200), Pt(-5830, -2200), Pt(-5830, 3025), Pt(-5780, 2550)),
     # Box(Pt(-5525, 2800), Pt(-5525, 2300), Pt(-4600, 2300), Pt(-6100, 2600)),
+    box_from_wh(lower_left=(4620, 100), width=630, height=1420, target=(4935, 900)),
+    # box_from_wh(upper_left=(3700, 670), width=900, height=920, target=(4000, 1000)),
 ]
 
 
@@ -30,7 +32,9 @@ def simulate(args: Namespace, dataset_path: str) -> None:
 
     box_world = BoxEnv(boxes)
 
-    initial_position = Pt(0, 0)
+    x = (boxes[0].A.x + boxes[0].B.x) / 2
+    y = boxes[0].A.y + 100
+    initial_position = Pt(x, y)
     initial_rotation = radians(90)
 
     if args.navigator == "wandering":
@@ -67,7 +71,7 @@ def simulate(args: Namespace, dataset_path: str) -> None:
         if args.anim_ext:
             box_world.display(ax)
             agent.display(ax, box_world.scale)
-            ax.invert_xaxis()
+            # ax.invert_xaxis()
             camera.snap()
 
     if isinstance(agent, UENavigatorWrapper):
