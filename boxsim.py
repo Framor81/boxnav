@@ -5,36 +5,34 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from celluloid import Camera
 
-from box.box import Pt, box_from_wh
+from box.box import Pt, aligned_box
 from box.boxenv import BoxEnv
 from box.boxnavigator import PerfectNavigator, WanderingNavigator
 from box.boxunreal import UENavigatorWrapper
 
 # TODO: this should probably be a command line argument (pass in a list of coordinates)
 # route 2, uses path w/ water fountain & stairs
-
 boxes = [
-    # Box(Pt(-185, 1250), Pt(420, 1250), Pt(420, -350), Pt(10, 650)),
-    # Box(Pt(-1110, 775), Pt(420, 775), Pt(420, 450), Pt(-835, 650)),
-    # Box(Pt(-910, 100), Pt(-910, 775), Pt(-750, 775), Pt(-820, 200)),
-    # Box(Pt(-750, 340), Pt(-750, 100), Pt(-4800, 100), Pt(-4650, 150)),
-    # Box(Pt(-4750, 340), Pt(-4480, 340), Pt(-4480, -2200), Pt(-4600, -2000)),
-    # Box(Pt(-4480, -1935), Pt(-4480, -2200), Pt(-6450, -640), Pt(-5700, -2000)),
-    # Box(Pt(-5525, -2200), Pt(-5830, -2200), Pt(-5830, 3025), Pt(-5780, 2550)),
-    # Box(Pt(-5525, 2800), Pt(-5525, 2300), Pt(-4600, 2300), Pt(-6100, 2600)),
-    box_from_wh(lower_left=(4620, 100), width=630, height=1420, target=(4935, 900)),
-    # box_from_wh(upper_left=(3700, 670), width=900, height=920, target=(4000, 1000)),
+    aligned_box(left=4640, right=5240, lower=110, upper=1510, target=(4940, 870)),
+    aligned_box(left=3720, right=5240, lower=700, upper=1040, target=(3920, 870)),
+    aligned_box(left=3720, right=4120, lower=350, upper=1040, target=(3920, 450)),
+    aligned_box(left=110, right=4120, lower=240, upper=540, target=(255, 390)),
+    aligned_box(left=110, right=400, lower=-1980, upper=540, target=(255, -1815)),
+    aligned_box(left=-1550, right=400, lower=-1980, upper=-1650, target=(-825, -1815)),
+    aligned_box(left=-950, right=-700, lower=-1980, upper=3320, target=(-825, 2485)),
+    aligned_box(left=-950, right=230, lower=2150, upper=2820, target=(200, 2485)),
 ]
 
 
 def simulate(args: Namespace, dataset_path: str) -> None:
     """Create and update the box environment and run the navigator."""
 
-    box_world = BoxEnv(boxes)
+    box_env = BoxEnv(boxes)
 
-    x = (boxes[0].A.x + boxes[0].B.x) / 2
-    y = boxes[0].A.y + 100
-    initial_position = Pt(x, y)
+    starting_box = boxes[0]
+    initial_x = starting_box.left + starting_box.width / 2
+    initial_y = starting_box.lower + 50
+    initial_position = Pt(initial_x, initial_y)
     initial_rotation = radians(90)
 
     if args.navigator == "wandering":
@@ -44,9 +42,7 @@ def simulate(args: Namespace, dataset_path: str) -> None:
     else:
         raise ValueError("Invalid value for navigator.")
 
-    agent = NavigatorConstructor(
-        initial_position, initial_rotation, box_world, allow_out_of_bounds=args.ue
-    )
+    agent = NavigatorConstructor(initial_position, initial_rotation, box_env)
 
     # Wrap the agent if we want to connect to Unreal Engine
     if args.ue:
@@ -68,10 +64,14 @@ def simulate(args: Namespace, dataset_path: str) -> None:
                 agent.ue5.close_osc()
             raise SystemExit
 
+        # except ValueError as e:
+        #     print(e)
+        #     break
+
         if args.anim_ext:
-            box_world.display(ax)
-            agent.display(ax, box_world.scale)
-            # ax.invert_xaxis()
+            box_env.display(ax)
+            agent.display(ax, 300)
+            ax.invert_xaxis()
             camera.snap()
 
     if isinstance(agent, UENavigatorWrapper):
@@ -114,7 +114,7 @@ def main():
     argparser.add_argument("--anim_ext", type=str, help="Output format for animation.")
 
     argparser.add_argument(
-        "--max_actions", type=int, default=50, help="Maximum allowed actions."
+        "--max_actions", type=int, default=10, help="Maximum allowed actions."
     )
 
     argparser.add_argument(

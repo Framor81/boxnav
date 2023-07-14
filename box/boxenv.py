@@ -36,9 +36,16 @@ class BoxEnv:
         for box in self.boxes:
             ax.add_patch(
                 Rectangle(
-                    box.origin, box.width, box.height, box.angle_degrees, fill=None
+                    box.origin,
+                    box.width,
+                    box.height,
+                    box.angle_degrees,
+                    facecolor="blue",
+                    alpha=0.5,
                 )
             )
+
+            ax.plot(box.target.x, box.target.y, "bx")
         # ax.set_xlim(self.xlim[::-1])
         ax.set_xlim(*self.xlim)
         ax.set_ylim(*self.ylim)

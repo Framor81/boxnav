@@ -13,7 +13,7 @@ def approx_equal(a: float, b: float, threshold: float = 0.0001) -> bool:
 class Pt:
     """Defines the x and y values of a point in R^2."""
 
-    def __init__(self, x: float, y: float) -> None:
+    def __init__(self, x: float, y: float):
         """Create a new point with the given x and y coordinate values."""
         self.x = x
         self.y = y
@@ -71,7 +71,7 @@ class Pt:
 
 
 class Box:
-    def __init__(self, lower_left: Pt, B: Pt, C: Pt, target: Pt) -> None:
+    def __init__(self, lower_left: Pt, upper_left: Pt, upper_right: Pt, target: Pt):
         """Create a arbitrarily rotated box.
 
         Args:
@@ -81,8 +81,8 @@ class Box:
             target (Pt): target location inside box
         """
         self.A = lower_left
-        self.B = B
-        self.C = C
+        self.B = upper_left
+        self.C = upper_right
         self.target = target
 
         self.AB = self.B - self.A
@@ -91,14 +91,13 @@ class Box:
         self.BC = self.C - self.B
         self.dotBC = Pt.scalar_product(self.BC, self.BC)
 
-        self.origin = self.A.x, self.A.y
+        # Used for drawing
+        self.left = min(self.A.x, self.B.x, self.C.x)
+        self.lower = min(self.A.y, self.B.y, self.C.y)
+        self.origin = (self.left, self.lower)
         self.width = Pt.distance(self.B, self.C)
         self.height = Pt.distance(self.A, self.B)
-
-        # TODO: why 180?
-        self.angle_degrees = 180 - degrees(
-            atan2(self.A.x - self.B.x, self.A.y - self.B.y)
-        )
+        self.angle_degrees = degrees(atan2(self.B.x - self.A.x, self.B.y - self.A.y))
 
     def point_is_inside(self, M: Pt) -> bool:
         """Determine whether the point is inside of this box."""
@@ -109,13 +108,20 @@ class Box:
         )
 
 
-def box_from_wh(lower_left: tup2, width: float, height: float, target: tup2) -> Box:
+def compute_angle_between_points(A: Pt, B: Pt) -> float:
+    """Compute the angle between two points."""
+    return
+
+
+def aligned_box(
+    left: float, right: float, lower: float, upper: float, target: tup2
+) -> Box:
     """Create a box aligned with the x and y axes."""
-    A = Pt(lower_left[0], lower_left[1])
-    B = Pt(lower_left[0], lower_left[1] + height)
-    C = Pt(lower_left[0] + width, lower_left[1] + height)
-    t = Pt(target[0], target[1])
-    return Box(A, B, C, t)
+    ll = Pt(left, lower)
+    ul = Pt(left, upper)
+    ur = Pt(right, upper)
+    t = Pt(*target)
+    return Box(ll, ul, ur, t)
 
 
 if __name__ == "__main__":

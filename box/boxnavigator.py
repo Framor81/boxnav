@@ -42,55 +42,39 @@ class BoxNavigatorBase:
     location of the final box.
     """
 
-    def __init__(
-        self,
-        position: Pt,
-        rotation: float,
-        env: BoxEnv,
-        allow_out_of_bounds: bool = False,
-    ) -> None:
+    def __init__(self, position: Pt, rotation: float, env: BoxEnv) -> None:
         """Initialize member variables for any navigator.
 
         Args:
             position (Pt): initial position
             rotation (float): initial rotation in radians
             env (BoxEnv): box environment
-            allow_out_of_bounds (bool, optional): whether to allow the navigator to go out of bounds. Defaults to False.
         """
         self.env = env
         self.position = position
         self.rotation = rotation
 
-        self.allow_out_of_bounds = allow_out_of_bounds
-
         self.target = self.env.boxes[0].target
-        # experimental:
-        self.is_out_of_bound = False
+        self.final_target = self.env.boxes[-1].target
+
+        # TODO: find good values for these
+        self.distance_threshold = 75
+        self.translation_increment = 120
+        self.rotation_increment = radians(10)
 
         # TODO: change from wedge to field-of-view?
-        self.half_target_wedge = radians(5)
-
-        # How much a navigator should translate or rotate in a given step
-        # of the simulation. These are fairly arbitrary.
-        # measured in centimeters
-        self.distance_threshold = 50
-        self.translation_increment = 50
-        self.rotation_increment = radians(5)
+        self.half_target_wedge = radians(6)
 
         self.actions_taken = 0
 
     def at_final_target(self) -> bool:
         """Is the navigator at the final target."""
-        return close_enough(
-            self.position, self.env.boxes[-1].target, self.distance_threshold
-        )
+        return close_enough(self.position, self.final_target, self.distance_threshold)
 
     def correct_action(self) -> Action:
-        # TODO: docstring
-        # TODO: cache this result?
+        """Compute the 'correct' action given the current position and target."""
 
-        # Find the correct action by calculating the angle between the
-        # target and the heading of the agent.
+        # Compute angle between heading and target
         heading_vector = Pt(cos(self.rotation), sin(self.rotation)).normalized()
         target_vector = (self.target - self.position).normalized()
         signed_angle_to_target = heading_vector.angle_between(target_vector)
@@ -118,33 +102,42 @@ class BoxNavigatorBase:
         Returns:
             tuple[Action, Action]: return action taken and correct action.
         """
-        self.update_target_if_needed()
+        self.update_target()
 
+        # Each navigator type will produce its own action
         action_taken = self.navigator_specific_action()
-        self.actions_taken += 1
+
+        # Also compute the 'correct' action
         correct_action = self.correct_action()
 
-        if action_taken == Action.FORWARD:
-            self.move_forward()
-        elif action_taken == Action.ROTATE_LEFT:
-            self.rotate_left()
-        elif action_taken == Action.ROTATE_RIGHT:
-            self.rotate_right()
-        else:
-            self.move_backward()
+        match action_taken:
+            case Action.FORWARD:
+                self.move_forward()
+            case Action.ROTATE_LEFT:
+                self.rotate_left()
+            case Action.ROTATE_RIGHT:
+                self.rotate_right()
+            case Action.BACKWARD:
+                self.move_backward()
+            case _:
+                raise NotImplementedError("Unknown action.")
 
+        # if action_taken == Action.FORWARD:
+        #     self.move_forward()
+        # elif action_taken == Action.ROTATE_LEFT:
+        #     self.rotate_left()
+        # elif action_taken == Action.ROTATE_RIGHT:
+        #     self.rotate_right()
+        # else:
+        #     self.move_backward()
+
+        self.actions_taken += 1
         return action_taken, correct_action
 
     def navigator_specific_action(self) -> Action:
-        """
-        Raises:
-            NotImplemented: implement in child classes
-        """
-        raise NotImplementedError(
-            "This method should only be implemented in the inheriting classes."
-        )
+        raise NotImplementedError("Implemented in inheriting classes.")
 
-    def update_target_if_needed(self) -> None:
+    def update_target(self) -> None:
         """Switch to next target when close enough to current target."""
         surrounding_boxes = self.env.get_boxes_enclosing_point(self.position)
         if (
@@ -157,30 +150,21 @@ class BoxNavigatorBase:
         """Move forward by a fixed amount."""
         new_x = self.position.x + self.translation_increment * cos(self.rotation)
         new_y = self.position.y + self.translation_increment * sin(self.rotation)
-        self.move(Pt(new_x, new_y))
+        self.checked_move(Pt(new_x, new_y))
 
     def move_backward(self) -> None:
         """Move backward by a fixed amount."""
         new_x = self.position.x - self.translation_increment * cos(self.rotation)
         new_y = self.position.y - self.translation_increment * sin(self.rotation)
-        self.move(Pt(new_x, new_y))
+        self.checked_move(Pt(new_x, new_y))
 
-    def move(self, new_pt: Pt) -> None:
-        """Jump to the given position if it is within a box.
+    def checked_move(self, new_pt: Pt) -> None:
+        """Jump to the given position if it is within a box."""
 
-        Args:
-            new_pt (Pt): new position
-
-        Raises:
-            NotImplemented: position is not valid
-        """
-
-        if self.allow_out_of_bounds or self.env.get_boxes_enclosing_point(new_pt):
+        if self.env.get_boxes_enclosing_point(new_pt):
             self.position = new_pt
-            self.is_out_of_bound = False
         else:
-            self.is_out_of_bound = True
-            # TODO: project to boundary?
+            raise ValueError("Cannot move to a position outside of all boxes.")
 
     def rotate_right(self) -> None:
         """Rotate to the right by a set amount."""
@@ -195,7 +179,7 @@ class BoxNavigatorBase:
 
         Args:
             ax (plt.Axes): axis for plotting
-            scale (float): scale of arrows
+            scale (float): scale of arrows and wedge
         """
 
         # Plot agent and agent's heading
@@ -205,22 +189,16 @@ class BoxNavigatorBase:
         ax.add_patch(Wedge(self.position.xy(), scale, wedge_lo, wedge_hi, color="red"))
 
         # Plot target and line to target
-        ax.plot(self.target.x, self.target.y, "bo")
+        ax.plot(self.target.x, self.target.y, "go")
         dxy = (self.target - self.position).normalized() * scale
-        ax.add_patch(Arrow(self.position.x, self.position.y, dxy.x, dxy.y, color="b"))
+        ax.add_patch(Arrow(self.position.x, self.position.y, dxy.x, dxy.y, color="g"))
 
 
 class PerfectNavigator(BoxNavigatorBase):
     """A "perfect" navigator that does not make mistakes."""
 
-    def __init__(
-        self,
-        position: Pt,
-        rotation: float,
-        env: BoxEnv,
-        allow_out_of_bounds: bool,
-    ) -> None:
-        super().__init__(position, rotation, env, allow_out_of_bounds)
+    def __init__(self, position: Pt, rotation: float, env: BoxEnv) -> None:
+        super().__init__(position, rotation, env)
 
     def navigator_specific_action(self) -> Action:
         """The perfect navigator always chooses the correct action."""
@@ -237,10 +215,9 @@ class WanderingNavigator(BoxNavigatorBase):
         position: Pt,
         rotation: float,
         env: BoxEnv,
-        allow_out_of_bounds: bool,
         chance_of_random_action: float = 0.25,
     ) -> None:
-        super().__init__(position, rotation, env, allow_out_of_bounds)
+        super().__init__(position, rotation, env)
         self.possible_actions = [
             Action.FORWARD,
             Action.ROTATE_LEFT,
