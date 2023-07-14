@@ -2,18 +2,11 @@ from __future__ import annotations
 
 from math import atan2, degrees, sqrt
 
+tup2 = tuple[float, float]
+
 
 def approx_equal(a: float, b: float, threshold: float = 0.0001) -> bool:
-    """Compare to floats and return true if they are approximately equal.
-
-    Args:
-        a (float): first float
-        b (float): second float
-        threshold (float, optional): threshold for being equal. Defaults to 0.0001.
-
-    Returns:
-        bool: true if approximately equal
-    """
+    """Compare to floats and return true if they are approximately equal."""
     return abs(a - b) < threshold
 
 
@@ -21,26 +14,21 @@ class Pt:
     """Defines the x and y values of a point in R^2."""
 
     def __init__(self, x: float, y: float) -> None:
-        """Set this Pt's X and Y values.
-
-        Args:
-            x (float): x-coordinate
-            y (float): y-coordinate
-        """
+        """Create a new point with the given x and y coordinate values."""
         self.x = x
         self.y = y
 
-    def xy(self) -> tuple[float, float]:
+    def xy(self) -> tup2:
         """Return point as a tuple."""
         return (self.x, self.y)
 
     def normalized(self) -> Pt:
-        """Normalize this 2d vector."""
-        magnitude = self.magnitude()
+        """Normalize as a 2D vector."""
+        magnitude = self.magnitude() + 0.0000001
         return Pt(self.x / magnitude, self.y / magnitude)
 
     def magnitude(self) -> float:
-        """Find the magnitude of this 2D vector."""
+        """Find the magnitude as a 2D vector."""
         return sqrt(self.x * self.x + self.y * self.y)
 
     def angle_between(self, other: Pt) -> float:
@@ -63,6 +51,9 @@ class Pt:
         """Does this Pt's x and y coordinates match close to another Pt."""
         return approx_equal(self.x, other.x) and approx_equal(self.y, other.y)
 
+    def __str__(self) -> str:
+        return f"({self.x}, {self.y})"
+
     @classmethod
     def scalar_product(cls, A: Pt, B: Pt) -> float:
         """Scalar product of two points."""
@@ -80,16 +71,16 @@ class Pt:
 
 
 class Box:
-    def __init__(self, A: Pt, B: Pt, C: Pt, target: Pt) -> None:
+    def __init__(self, lower_left: Pt, B: Pt, C: Pt, target: Pt) -> None:
         """Create a arbitrarily rotated box.
 
         Args:
-            A (Pt): origin point
+            lower_left (Pt): lower left origin point
             B (Pt): next point clockwise
             C (Pt): next point clockwise
             target (Pt): target location inside box
         """
-        self.A = A
+        self.A = lower_left
         self.B = B
         self.C = C
         self.target = target
@@ -110,19 +101,21 @@ class Box:
         )
 
     def point_is_inside(self, M: Pt) -> bool:
-        """Determine whether the point is inside of this box.
-
-        Args:
-            M (Pt): A 2D point
-
-        Returns:
-            bool: Whether the Pt is inside this box
-        """
+        """Determine whether the point is inside of this box."""
         AM = M - self.A
         BM = M - self.B
         return (0 <= Pt.scalar_product(self.AB, AM) <= self.dotAB) and (
             0 <= Pt.scalar_product(self.BC, BM) <= self.dotBC
         )
+
+
+def box_from_wh(lower_left: tup2, width: float, height: float, target: tup2) -> Box:
+    """Create a box aligned with the x and y axes."""
+    A = Pt(lower_left[0], lower_left[1])
+    B = Pt(lower_left[0], lower_left[1] + height)
+    C = Pt(lower_left[0] + width, lower_left[1] + height)
+    t = Pt(target[0], target[1])
+    return Box(A, B, C, t)
 
 
 if __name__ == "__main__":
