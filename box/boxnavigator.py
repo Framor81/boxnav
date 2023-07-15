@@ -5,24 +5,8 @@ from random import choice, random
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arrow, Wedge
 
-from .box import Pt
+from .box import Pt, close_enough
 from .boxenv import BoxEnv
-
-
-def close_enough(A: Pt, B: Pt, threshold: float = 1) -> bool:
-    """Determine whether Pt A is close enough to Pt B depending on the threshold value.
-
-    Args:
-        A (Pt): First Pt to compare
-        B (Pt): Second Pt to compare
-        threshold (float, optional): max distance for being "close". Defaults to 1.
-
-    Returns:
-        bool: Is Pt A close enough to Pt B given a threshold
-    """
-    # TODO: find good threshold value
-    distance = (A - B).magnitude()
-    return distance < threshold
 
 
 class Action(Enum):
@@ -57,12 +41,10 @@ class BoxNavigatorBase:
         self.target = self.env.boxes[0].target
         self.final_target = self.env.boxes[-1].target
 
-        # TODO: find good values for these
+        # TODO: find appropriate values for these
         self.distance_threshold = 75
         self.translation_increment = 120
         self.rotation_increment = radians(10)
-
-        # TODO: change from wedge to field-of-view?
         self.half_target_wedge = radians(6)
 
         self.actions_taken = 0
@@ -121,15 +103,6 @@ class BoxNavigatorBase:
                 self.move_backward()
             case _:
                 raise NotImplementedError("Unknown action.")
-
-        # if action_taken == Action.FORWARD:
-        #     self.move_forward()
-        # elif action_taken == Action.ROTATE_LEFT:
-        #     self.rotate_left()
-        # elif action_taken == Action.ROTATE_RIGHT:
-        #     self.rotate_right()
-        # else:
-        #     self.move_backward()
 
         self.actions_taken += 1
         return action_taken, correct_action

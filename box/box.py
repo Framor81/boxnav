@@ -10,6 +10,22 @@ def approx_equal(a: float, b: float, threshold: float = 0.0001) -> bool:
     return abs(a - b) < threshold
 
 
+def close_enough(A: Pt, B: Pt, threshold: float) -> bool:
+    """Determine whether Pt A is close enough to Pt B depending on the threshold value.
+
+    Args:
+        A (Pt): First Pt to compare
+        B (Pt): Second Pt to compare
+        threshold (float, optional): max distance for being "close". Defaults to 1.
+
+    Returns:
+        bool: Is Pt A close enough to Pt B given a threshold
+    """
+    # TODO: find good threshold value
+    distance = (A - B).magnitude()
+    return distance < threshold
+
+
 class Pt:
     """Defines the x and y values of a point in R^2."""
 
