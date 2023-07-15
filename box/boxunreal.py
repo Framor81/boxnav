@@ -13,34 +13,33 @@ class UENavigatorWrapper:
     def __init__(
         self,
         navigator: BoxNavigatorBase,
-        dataset_path: str,
+        dataset_path: str | None,
         py_server_port: int,
         ue_server_port: int,
     ) -> None:
         self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
 
         self.navigator = navigator
-        self.dataset_path = Path(dataset_path)
-        # self.ue_image_path = Path(ue_image_path)
-        self.save_images = save_images
+        self.dataset_path = Path(dataset_path).resolve() if dataset_path else None
+
+        if self.dataset_path:
+            self.dataset_path.mkdir(parents=True, exist_ok=True)
+
+        self.images_saved = 0
 
         try:
             # Sync UE and boxsim
             self.sync_positions()
             self.sync_rotation()
-        except TimeoutError as e:
+        except TimeoutError:
             self.ue5.close_osc()
             print(
-                "Received Timeout Error from OSC Communicator. Check if UE packaged game is running."
+                "Received Timeout Error from OSC Communicator.",
+                "Check if UE packaged game is running.",
             )
             raise SystemExit
 
         self.reset()
-
-        # Create the dataset directory if it doesn't exist
-        self.dataset_path.mkdir(parents=True, exist_ok=True)
-
-        self.images_saved = 0
 
     def reset(self) -> None:
         """Resets agent to its initial position."""
@@ -83,8 +82,11 @@ class UENavigatorWrapper:
         """
 
         action_taken, correct_action = self.navigator.take_action()
-        if self.save_images:
+        if self.dataset_path:
             self.save_image(correct_action)
+        else:
+            # A short delay to allow UE to render the scene after teleport
+            sleep(0.1)
 
         if action_taken == Action.FORWARD:
             self.ue5.move_forward(self.navigator.translation_increment)
@@ -113,12 +115,8 @@ class UENavigatorWrapper:
 
         self.images_saved += 1
 
-        # Tell UE to save an image
+        # Let teleport complete, save the image, then wait for image save
+        sleep(0.25)
         self.ue5.save_image(image_filepath)
-
-        # Sleep to give time for the image to save
         # TODO: maybe loop until the image exists?
-        sleep(0.5)
-
-        # Move the UE image to the dataset directory
-        # self.ue_image_path.rename(image_filepath)
+        sleep(0.25)
