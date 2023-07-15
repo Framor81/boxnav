@@ -14,14 +14,19 @@ from box.boxunreal import UENavigatorWrapper
 # route 2, uses path w/ water fountain & stairs
 boxes = [
     aligned_box(left=4640, right=5240, lower=110, upper=1510, target=(4940, 870)),
-    aligned_box(left=3720, right=5240, lower=700, upper=1040, target=(3920, 870)),
-    aligned_box(left=3720, right=4120, lower=350, upper=1040, target=(3920, 450)),
+    aligned_box(left=3720, right=5240, lower=700, upper=1040, target=(4100, 870)),
+    aligned_box(left=3720, right=4120, lower=350, upper=1040, target=(4100, 400)),
     aligned_box(left=110, right=4120, lower=240, upper=540, target=(255, 390)),
-    aligned_box(left=110, right=400, lower=-1980, upper=540, target=(255, -1815)),
+    aligned_box(left=110, right=400, lower=-1980, upper=540, target=(255, -1900)),
     aligned_box(left=-1550, right=400, lower=-1980, upper=-1650, target=(-825, -1815)),
     aligned_box(left=-950, right=-700, lower=-1980, upper=3320, target=(-825, 2485)),
     aligned_box(left=-950, right=230, lower=2150, upper=2820, target=(200, 2485)),
 ]
+
+
+def check_path(path: Path) -> None:
+    # TODO: check for existing files
+    pass
 
 
 def simulate(args: Namespace, dataset_path: str) -> None:
@@ -69,6 +74,7 @@ def simulate(args: Namespace, dataset_path: str) -> None:
         #     break
 
         if args.anim_ext:
+            # TODO: Rotate axis so that agent is always facing up
             box_env.display(ax)
             agent.display(ax, 300)
             ax.invert_xaxis()
@@ -152,6 +158,9 @@ def main():
 
     if args.resolution and not args.ue:
         raise ValueError("Resolution is unnecessary without Unreal Engine.")
+
+    if args.save_images:
+        check_path(args.save_images)
 
     simulate(args, args.save_images)
 
