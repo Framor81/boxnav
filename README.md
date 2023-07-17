@@ -59,7 +59,6 @@ python boxsim.py <navigator> --ue
 python boxsim.py <navigator> --ue --save_images 'path/to/dataset'
 ~~~
 
-
 ### Note about Command Line Arguments
 
 The above command specifies the required arguments needed to run the box simulation in Unreal Engine. But there are other optional specifications. Here are all the arguments you can specify:
