@@ -1,6 +1,6 @@
 # BoxNav
 
-![Demo of an agent operating in a box environment.Demo of an agent operating in a box environment.](demo.gif)
+![Demo of an agent operating in a box environment.](demo.gif)
 
 A simple playground for making an agent navigate around some directed corridors represented as overlapping boxes.
 
