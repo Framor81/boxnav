@@ -22,7 +22,7 @@ conda create --name <env_name>
 conda activate <env_name>
 ~~~
 
-2. Next, activate this newly created environment and run the following commands in the terminal.
+2. Next, install the needed libraries.
 
 ```
 conda install python matplotlib celluloid
