@@ -15,11 +15,12 @@ Clone this repository. Move into the cloned boxnav directory. Press play on your
 
 Then to kick off the simulation you must first ensure the following steps are followed:
 
-1. It is essential that you create a conda environment.
+1. First, create and activate an anaconda environment.
 
-```
+~~~
 conda create --name <env_name>
-```
+conda activate <env_name>
+~~~
 
 2. Next, activate this newly created environment and run the following commands in the terminal.
 
