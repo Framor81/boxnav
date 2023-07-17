@@ -1,13 +1,13 @@
 # BoxNav
 
-![](demo.gif)
+![Demo of an agent operating in a box environment.](demo.gif)
 
 A simple playground for making an agent navigate around some directed corridors represented as overlapping boxes.
 
 ## Getting Started in Unreal Engine
 
 ### Dependencies
-Create or open an unreal engine project. Ensure you have the OSC (Open Sound Control)plugin file downloaded into your current project. Ensure you also have the [ue5osc](https://github.com/arcslaboratory/ue5osc) library downloaded. 
+Unreal Engine is needed for data collection, and you will want to either download our packaged game or the version on Gitea. You will also need to install [ue5osc](https://github.com/arcslaboratory/ue5osc) using the instructions found in its README.
 
 ### Beginning the Simulation in UE5
 Clone this repository. Move into the cloned boxnav directory. Press play on your Unreal Engine project.
