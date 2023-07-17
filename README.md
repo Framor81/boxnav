@@ -1,35 +1,34 @@
 # BoxNav
 
-![](demo.gif)
+![Demo of an agent operating in a box environment.](demo.gif)
 
 A simple playground for making an agent navigate around some directed corridors represented as overlapping boxes.
 
 ## Getting Started in Unreal Engine
 
 ### Dependencies
-Create or open an unreal engine project. Ensure you have the [unrealcv](https://github.com/unrealcv/unrealcv) plugin file copied into your current project. Ensure you also have the [ue5env](https://github.com/arcslaboratory/ue5env) library downloaded. 
+
+Unreal Engine is needed for data collection, and you will want to either download our packaged game or the version on Gitea. You will also need to install [ue5osc](https://github.com/arcslaboratory/ue5osc) using the instructions found in its README.
 
 ### Beginning the Simulation in UE5
-Clone this repository. Move into the cloned boxenv directory. Press play on your Unreal Engine project.
 
 Then kick off the simulation with:
 
 ~~~bash
-python boxsim.py <navigator> --ue --port=<port> <dataset_path> <image_path>
+# Runs the navigator in Python
+python boxsim.py <navigator>
+
+# Runs the navigator in Python and generates an animated gif
+python boxsim.py <navigator> --anim_ext gif
+
+# Runs the navigator in Python and Unreal Engine
+python boxsim.py <navigator> --ue
+
+# Runs the navigator in Python and Unreal Engine and generates a dataset
+python boxsim.py <navigator> --ue --save_images 'path/to/dataset'
 ~~~
 
-### Note about Command Line Arguments
-
-The above command specifies the required arguments needed to run the box simulation in Unreal Engine. But there are other optional specifications. Here are all the arguments you can specify:
-- ---anim_type=\<extension>: (optional) extension for output format.
-- \<navigator>: must choose between "wandering" and "perfect"
-- ---ue: (optional) note if you want to connect to Unreal Engine
-- ---port=\<port>: (optional) specify port to route through
-- ---collect: (optional) use if you want to collect images
-- \<dataset_path>: must specify a path connected to your dataset folder
-- \<image_path>: must specify a path to store collected images 
-
-You can look at how these arguments are used in the boxsim.py file.
+See the command line arguments listed in `boxsim.py` for more options.
 
 ### Other Notes
 
@@ -37,11 +36,3 @@ Right-handed coordinate system.
 
 - Up-Down is y relative to Oldenborg
 - Left-right is x relative to Oldenborg
-
-
-Things to do:
-
-- Document code
-- Add box to box navigation for boy scout (move to next target)
-- Implement wanderer navigator
-- Create environment using Oldenborg values from Liz (find spreadsheet on Slack)
