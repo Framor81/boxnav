@@ -24,13 +24,10 @@ conda activate <env_name>
 
 2. Next, install the needed libraries.
 
-```
+~~~
 conda install python matplotlib celluloid
-```
-
-```
 python -m pip install python-osc
-```
+~~~
 
 3. After cloning the ue5osc library, navigate into this repository and install this library with:
 
