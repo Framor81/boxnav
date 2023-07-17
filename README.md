@@ -32,9 +32,10 @@ conda install python matplotlib celluloid
 python -m pip install python-osc
 ```
 
-3. After downloading the ue5osc library, navigate into this repository and you will need to install this library with:
+3. After cloning the ue5osc library, navigate into this repository and install this library with:
 
 ```
+cd ue5osc
 python -m pip install --editable .
 ```
 
@@ -62,19 +63,7 @@ python boxsim.py <navigator> --ue --save_images 'path/to/dataset'
 
 ### Note about Command Line Arguments
 
-The above command specifies the required arguments needed to run the box simulation in Unreal Engine. But there are other optional specifications. Here are all the arguments you can specify:
-
-- \<navigator>: must choose between "wandering" and "perfect" and decides the navigator that will be used when running the simulation.
-- --anim_ext=\<extension>: (optional) extension for output format to help visualize run.
-- --max_actions=\<int>: (optional) Maximum number of allowed actions when running the simulation
-- --save_images=\<file path>: (optional) enables image capturing to specified path (may be relative or absolute path)
-- --ue: (optional) Note: Required if you want to connect to Unreal Engine
-- --py_port=\<port>: (optional) Python OSC server port.
-- --ue_port=\<port>: (optional) Unreal Engine OSC server port.
-- --image_ext=\<extension>: (optional) Sets file extensions for images to be saved as.
-- --resolution=\<string ResXxResY>: (optional) sets resolution of screen
-
-You can look at how these arguments are used in the boxsim.py file.
+The commands above showcase some examples as to how the script can be ran. Please look into the boxsim.py file for details over the arguments that can be passed.
 
 ### Notes about Unreal Engine
 
