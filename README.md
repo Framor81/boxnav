@@ -43,15 +43,7 @@ python -m pip install --editable .
 conda activate <env_name>
 ```
 
-5. After activating the environment, the script is now ready to run with the command:
-
-- To run the script just by itself, you do not need to open unreal engine and you can type:
-
-~~~bash
-python boxsim.py <navigator> 
-~~~
-
-- In order to operate with unreal engine the following line will instead be required:
+5. After activating the environment, the script is now ready to run with the commands:
 
 ~~~bash
 # Runs the navigator in Python
