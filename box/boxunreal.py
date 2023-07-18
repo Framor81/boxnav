@@ -111,10 +111,10 @@ class UENavigatorWrapper:
             action = Action.ROTATE_LEFT
 
         # Generate the next filename
-        degree = str(self.navigator.target_degree).replace(".", "p")
+        angle = str(self.navigator.target_angle).replace(".", "p")
         image_filepath = (
             f"{self.dataset_path}/"
-            f"{self.images_saved:06}_{degree}.{str(self.image_ext).lower()}"
+            f"{self.images_saved:06}_{angle}.{str(self.image_ext).lower()}"
         )
 
         self.images_saved += 1
