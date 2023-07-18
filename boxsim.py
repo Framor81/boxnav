@@ -57,6 +57,7 @@ def simulate(args: Namespace, dataset_path: str) -> None:
             args.save_images,
             args.py_port,
             args.ue_port,
+            args.image_ext,
         )
 
     fig, ax = plt.subplots()
@@ -147,6 +148,10 @@ def main():
 
     argparser.add_argument(
         "--resolution", type=str, help="Set resolution of images as ResX."
+    )
+
+    argparser.add_argument(
+        "--image_ext", type=str, default="png", help="Output format for images"
     )
 
     args = argparser.parse_args()

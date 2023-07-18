@@ -16,6 +16,7 @@ class UENavigatorWrapper:
         dataset_path: str | None,
         py_server_port: int,
         ue_server_port: int,
+        image_ext: str,
     ) -> None:
         self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
 
@@ -26,6 +27,7 @@ class UENavigatorWrapper:
             self.dataset_path.mkdir(parents=True, exist_ok=True)
 
         self.images_saved = 0
+        self.image_ext = image_ext
 
         try:
             # Sync UE and boxsim
@@ -110,7 +112,8 @@ class UENavigatorWrapper:
 
         # Generate the next filename
         image_filepath = (
-            f"{self.dataset_path}/" f"{self.images_saved:06}_{str(action).lower()}.png"
+            f"{self.dataset_path}/"
+            f"{self.images_saved:06}_{str(action).lower()}.{str(self.image_ext).lower()}"
         )
 
         self.images_saved += 1
