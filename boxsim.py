@@ -72,7 +72,7 @@ def simulate(args: Namespace, dataset_path: str) -> None:
             raise SystemExit
 
         if agent.num_actions_taken() % 20 == 0:
-            agent.ue5.console(f"ke * texture {randrange(3)} {randrange(40)}")
+            agent.ue5.console(f"ke * texture {randrange(3)} {randrange(42)}")
 
         # except ValueError as e:
         #     print(e)

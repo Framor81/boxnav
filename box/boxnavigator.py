@@ -59,19 +59,22 @@ class BoxNavigatorBase:
         # Compute angle between heading and target
         heading_vector = Pt(cos(self.rotation), sin(self.rotation)).normalized()
         target_vector = (self.target - self.position).normalized()
-        signed_angle_to_target = heading_vector.angle_between(target_vector)
+        self.signed_angle_to_target = heading_vector.angle_between(target_vector)
 
         # Already facing correct direction
-        if abs(signed_angle_to_target) < self.half_target_wedge:
+        if abs(self.signed_angle_to_target) < self.half_target_wedge:
             action = Action.FORWARD
+            self.target_degree = 0
 
-        # Need to rotate left (think of unit circle)
-        elif signed_angle_to_target > 0:
+        # Need to rotate left (think of unit circle); rotation indicated by positive degrees
+        elif self.signed_angle_to_target > 0:
             action = Action.ROTATE_LEFT
+            self.target_degree = -float(str(self.signed_angle_to_target)[:7])
 
-        # Need to rotate right (think of unit circle)
+        # Need to rotate right (think of unit circle); rotation indicated by negative degrees
         else:
             action = Action.ROTATE_RIGHT
+            self.target_degree = -float(str(self.signed_angle_to_target)[:7])
 
         return action
 
