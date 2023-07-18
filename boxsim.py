@@ -1,6 +1,7 @@
 from argparse import ArgumentParser, Namespace
 from math import radians
 from pathlib import Path
+from random import randrange
 
 import matplotlib.pyplot as plt
 from celluloid import Camera
@@ -68,6 +69,9 @@ def simulate(args: Namespace, dataset_path: str) -> None:
             if isinstance(agent, UENavigatorWrapper):
                 agent.ue5.close_osc()
             raise SystemExit
+
+        if agent.num_actions_taken() % 20 == 0:
+            agent.ue5.console(f"ke * texture {randrange(3)} {randrange(40)}")
 
         # except ValueError as e:
         #     print(e)
@@ -153,8 +157,8 @@ def main():
             f"Invalid navigator type: {args.navigator}. Possible options: {'|'.join(possible_navigators)}"
         )
 
-    if args.save_images and not args.ue:
-        raise ValueError("Cannot collect data without connecting to Unreal Engine.")
+    if args.save_images:
+        args.ue = True
 
     if args.resolution and not args.ue:
         raise ValueError("Resolution is unnecessary without Unreal Engine.")
