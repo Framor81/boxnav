@@ -35,7 +35,7 @@ def check_path(directory: str) -> None:
         raise ValueError(f"Directory {path} is not empty.")
 
 
-def simulate(args: Namespace, dataset_path: str) -> None:
+def simulate(args: Namespace, trial_num: int) -> None:
     """Create and update the box environment and run the navigator."""
 
     box_env = BoxEnv(boxes)
@@ -63,6 +63,7 @@ def simulate(args: Namespace, dataset_path: str) -> None:
             args.py_port,
             args.ue_port,
             args.image_ext,
+            trial_num,
         )
 
     fig, ax = plt.subplots()
@@ -159,6 +160,13 @@ def main():
         "--image_ext", type=str, default="png", help="Output format for images"
     )
 
+    argparser.add_argument(
+        "--num_trials",
+        type=int,
+        default=1,
+        help="Set the number of trials to execute.",
+    )
+
     args = argparser.parse_args()
 
     possible_navigators = ["wandering", "perfect"]
@@ -176,7 +184,8 @@ def main():
     if args.save_images:
         check_path(args.save_images)
 
-    simulate(args, args.save_images)
+    for trial in range(1, args.num_trials + 1):
+        simulate(args, trial)
 
 
 if __name__ == "__main__":
