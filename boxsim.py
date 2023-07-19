@@ -30,7 +30,7 @@ def check_path(path: Path) -> None:
     pass
 
 
-def simulate(args: Namespace, dataset_path: str, starting_image: int) -> None:
+def simulate(args: Namespace, trial_num: int) -> None:
     """Create and update the box environment and run the navigator."""
 
     box_env = BoxEnv(boxes)
@@ -58,7 +58,7 @@ def simulate(args: Namespace, dataset_path: str, starting_image: int) -> None:
             args.py_port,
             args.ue_port,
             args.image_ext,
-            starting_image,
+            trial_num,
         )
 
     fig, ax = plt.subplots()
@@ -106,9 +106,6 @@ def simulate(args: Namespace, dataset_path: str, starting_image: int) -> None:
         anim = camera.animate()
         anim.save(output_filename)
         print(f"Animation saved to {output_filename}.")
-
-    # Last Image number saved
-    return agent.images_saved
 
 
 def main():
@@ -159,10 +156,10 @@ def main():
     )
 
     argparser.add_argument(
-        "--num_runs",
+        "--num_trials",
         type=int,
         default=1,
-        help="Set the number of runs in Unreal Engine.",
+        help="Set the number of trials to execute.",
     )
 
     args = argparser.parse_args()
@@ -182,12 +179,8 @@ def main():
     if args.save_images:
         check_path(args.save_images)
 
-    for runs in range(args.num_runs):
-        # Runs the simulation the specified amount of runs without overwriting previous images
-        if runs == 0:
-            starting_image = simulate(args, args.save_images, 0)
-        else:
-            starting_image = simulate(args, args.save_images, starting_image)
+    for trial in range(1, args.num_trials + 1):
+        simulate(args, trial)
 
 
 if __name__ == "__main__":
