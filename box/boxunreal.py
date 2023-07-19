@@ -17,6 +17,7 @@ class UENavigatorWrapper:
         py_server_port: int,
         ue_server_port: int,
         image_ext: str,
+        starting_image: int,
     ) -> None:
         self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
 
@@ -26,7 +27,7 @@ class UENavigatorWrapper:
         if self.dataset_path:
             self.dataset_path.mkdir(parents=True, exist_ok=True)
 
-        self.images_saved = 0
+        self.images_saved = starting_image
         self.image_ext = image_ext
 
         try:

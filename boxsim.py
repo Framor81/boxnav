@@ -30,7 +30,7 @@ def check_path(path: Path) -> None:
     pass
 
 
-def simulate(args: Namespace, dataset_path: str) -> None:
+def simulate(args: Namespace, dataset_path: str, starting_image: int) -> None:
     """Create and update the box environment and run the navigator."""
 
     box_env = BoxEnv(boxes)
@@ -58,6 +58,7 @@ def simulate(args: Namespace, dataset_path: str) -> None:
             args.py_port,
             args.ue_port,
             args.image_ext,
+            starting_image,
         )
 
     fig, ax = plt.subplots()
@@ -105,6 +106,9 @@ def simulate(args: Namespace, dataset_path: str) -> None:
         anim = camera.animate()
         anim.save(output_filename)
         print(f"Animation saved to {output_filename}.")
+
+    # Last Image number saved
+    return agent.images_saved
 
 
 def main():
@@ -154,6 +158,13 @@ def main():
         "--image_ext", type=str, default="png", help="Output format for images"
     )
 
+    argparser.add_argument(
+        "--num_runs",
+        type=int,
+        default=1,
+        help="Set the number of runs in Unreal Engine.",
+    )
+
     args = argparser.parse_args()
 
     possible_navigators = ["wandering", "perfect"]
@@ -171,7 +182,12 @@ def main():
     if args.save_images:
         check_path(args.save_images)
 
-    simulate(args, args.save_images)
+    for runs in range(args.num_runs):
+        # Runs the simulation the specified amount of runs without overwriting previous images
+        if runs == 0:
+            starting_image = simulate(args, args.save_images, 0)
+        else:
+            starting_image = simulate(args, args.save_images, starting_image)
 
 
 if __name__ == "__main__":
