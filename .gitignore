@@ -2,6 +2,8 @@ output*.gif
 *.png
 *.jpg
 *.zip
+*.mp4
+*.mov
 
 # Created by https://www.toptal.com/developers/gitignore/api/Python
 # Edit at https://www.toptal.com/developers/gitignore?templates=Python
