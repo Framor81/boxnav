@@ -25,9 +25,14 @@ boxes = [
 ]
 
 
-def check_path(path: Path) -> None:
-    # TODO: check for existing files
-    pass
+def check_path(directory: str) -> None:
+    path = Path(directory)
+    # Create directory if it doesn't exist
+    path.mkdir(parents=True, exist_ok=True)
+
+    # Check if directory is empty
+    if len(list(Path(path).iterdir())) != 0:
+        raise ValueError(f"Directory {path} is not empty.")
 
 
 def simulate(args: Namespace, dataset_path: str) -> None:
@@ -147,7 +152,7 @@ def main():
     )
 
     argparser.add_argument(
-        "--resolution", type=str, help="Set resolution of images as ResX."
+        "--resolution", type=str, help="Set resolution of images as ResXxResY."
     )
 
     argparser.add_argument(

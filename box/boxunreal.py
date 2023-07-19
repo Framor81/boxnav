@@ -17,6 +17,7 @@ class UENavigatorWrapper:
         py_server_port: int,
         ue_server_port: int,
         image_ext: str,
+        quality_level: int = 2,
     ) -> None:
         self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
 
@@ -41,6 +42,7 @@ class UENavigatorWrapper:
             )
             raise SystemExit
 
+        self.ue5.set_quality(quality_level)
         self.reset()
 
     def reset(self) -> None:
