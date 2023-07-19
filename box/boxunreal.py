@@ -17,6 +17,7 @@ class UENavigatorWrapper:
         py_server_port: int,
         ue_server_port: int,
         image_ext: str,
+        trial_num: int,
     ) -> None:
         self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
 
@@ -26,7 +27,8 @@ class UENavigatorWrapper:
         if self.dataset_path:
             self.dataset_path.mkdir(parents=True, exist_ok=True)
 
-        self.images_saved = 0
+        self.trial_num = trial_num
+        self.images_saved = 1
         self.image_ext = image_ext
 
         try:
@@ -114,7 +116,7 @@ class UENavigatorWrapper:
         angle = str(self.navigator.target_angle).replace(".", "p")
         image_filepath = (
             f"{self.dataset_path}/"
-            f"{self.images_saved:06}_{angle}.{str(self.image_ext).lower()}"
+            f"{self.trial_num:03}_{self.images_saved:06}_{angle}.{str(self.image_ext).lower()}"
         )
 
         self.images_saved += 1
