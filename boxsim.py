@@ -78,8 +78,8 @@ def simulate(args: Namespace, trial_num: int) -> None:
                 agent.ue5.close_osc()
             raise SystemExit
 
-        if agent.num_actions_taken() % 20 == 0:
-            agent.ue5.console(f"ke * texture {randrange(3)} {randrange(42)}")
+        if agent.num_actions_taken() % 20 == 0 and args.randomize:
+            agent.ue5.set_texture(randrange(3), randrange(42))
 
         # except ValueError as e:
         #     print(e)
@@ -173,6 +173,13 @@ def main():
         type=float,
         default=120.0,
         help="Sets the size of the raycast.",
+    )
+
+    argparser.add_argument(
+        "--randomize",
+        type=bool,
+        default=True,
+        help="Randomizes the texture of the walls, floors, and ceilings.",
     )
 
     args = argparser.parse_args()
