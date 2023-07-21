@@ -64,6 +64,7 @@ def simulate(args: Namespace, trial_num: int) -> None:
             args.ue_port,
             args.image_ext,
             trial_num,
+            args.raycast_length,
         )
 
     fig, ax = plt.subplots()
@@ -165,6 +166,13 @@ def main():
         type=int,
         default=1,
         help="Set the number of trials to execute.",
+    )
+
+    argparser.add_argument(
+        "--raycast_length",
+        type=float,
+        default=120.0,
+        help="Sets the size of the raycast.",
     )
 
     args = argparser.parse_args()
