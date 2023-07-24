@@ -43,11 +43,14 @@ class BoxNavigatorBase:
 
         # TODO: find appropriate values for these
         self.distance_threshold = 75
-        self.translation_increment = 120
+        self.forward_increment = None
         self.rotation_increment = radians(10)
         self.half_target_wedge = radians(6)
 
         self.actions_taken = 0
+
+    def set_forward_increment(self, forward_increment: float) -> None:
+        self.forward_increment = forward_increment
 
     def at_final_target(self) -> bool:
         """Is the navigator at the final target."""
@@ -124,14 +127,14 @@ class BoxNavigatorBase:
 
     def move_forward(self) -> None:
         """Move forward by a fixed amount."""
-        new_x = self.position.x + self.translation_increment * cos(self.rotation)
-        new_y = self.position.y + self.translation_increment * sin(self.rotation)
+        new_x = self.position.x + self.forward_increment * cos(self.rotation)
+        new_y = self.position.y + self.forward_increment * sin(self.rotation)
         self.checked_move(Pt(new_x, new_y))
 
     def move_backward(self) -> None:
         """Move backward by a fixed amount."""
-        new_x = self.position.x - self.translation_increment * cos(self.rotation)
-        new_y = self.position.y - self.translation_increment * sin(self.rotation)
+        new_x = self.position.x - self.forward_increment * cos(self.rotation)
+        new_y = self.position.y - self.forward_increment * sin(self.rotation)
         self.checked_move(Pt(new_x, new_y))
 
     def checked_move(self, new_pt: Pt) -> None:

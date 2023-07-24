@@ -18,7 +18,7 @@ class UENavigatorWrapper:
         ue_server_port: int,
         image_ext: str,
         trial_num: int,
-        raycast_length: float,
+        forward_increment: float,
         quality_level: int = 1,
     ) -> None:
         self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
@@ -29,7 +29,9 @@ class UENavigatorWrapper:
         if self.dataset_path:
             self.dataset_path.mkdir(parents=True, exist_ok=True)
 
-        self.raycast_length = raycast_length
+        self.navigator.set_forward_increment(forward_increment)
+        self.raycast_length = forward_increment
+
         self.trial_num = trial_num
         self.images_saved = 1
         self.image_ext = image_ext
@@ -119,10 +121,10 @@ class UENavigatorWrapper:
                     self.stuck = True
             else:
                 if raycast == 0:
-                    self.ue5.move_forward(self.navigator.translation_increment)
+                    self.ue5.move_forward(self.navigator.forward_increment)
                     self.num_actions = 0
         elif action_taken == Action.BACKWARD:
-            self.ue5.move_backward(self.navigator.translation_increment)
+            self.ue5.move_backward(self.navigator.forward_increment)
         elif action_taken == Action.ROTATE_LEFT:
             self.sync_rotation()
         elif action_taken == Action.ROTATE_RIGHT:
