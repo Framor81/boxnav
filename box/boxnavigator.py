@@ -140,7 +140,7 @@ class BoxNavigatorBase:
         if self.env.get_boxes_enclosing_point(new_pt):
             self.position = new_pt
         else:
-            raise ValueError("Cannot move to a position outside of all boxes.")
+            return
 
     def rotate_right(self) -> None:
         """Rotate to the right by a set amount."""

@@ -33,6 +33,9 @@ class UENavigatorWrapper:
         self.trial_num = trial_num
         self.images_saved = 1
         self.image_ext = image_ext
+        self.num_actions = 0
+        self.distance_moved = [0, 0]
+        self.stuck = False
 
         try:
             # Sync UE and boxsim
@@ -48,6 +51,7 @@ class UENavigatorWrapper:
 
         self.ue5.set_quality(quality_level)
         self.reset()
+        sleep(1)
 
     def reset(self) -> None:
         """Resets agent to its initial position."""
@@ -89,6 +93,7 @@ class UENavigatorWrapper:
             RuntimeError: If the action is not defined.
         """
         self.ue5.set_raycast(self.raycast_length)
+
         action_taken, correct_action = self.navigator.take_action()
         if self.dataset_path:
             self.save_image(correct_action)
@@ -98,8 +103,24 @@ class UENavigatorWrapper:
 
         if action_taken == Action.FORWARD:
             raycast = self.ue5.get_raycast()
-            if raycast < self.navigator.translation_increment or raycast != 0:
-                self.ue5.move_forward(self.navigator.translation_increment)
+            self.num_actions += 1
+
+            # Get location to get compared on our first move and 5th move
+            if self.num_actions == 1:
+                self.first_action = self.ue5.get_location()
+            elif self.num_actions == 5:
+                self.last_action = self.ue5.get_location()
+
+            # Checks and sets a flag if we are stuck unable to move forward.
+            if self.num_actions >= 10:
+                x_diff = self.last_action[0] - self.first_action[0]
+                y_diff = self.last_action[1] - self.first_action[1]
+                if x_diff < 10 and y_diff < 10:
+                    self.stuck = True
+            else:
+                if raycast == 0:
+                    self.ue5.move_forward(self.navigator.translation_increment)
+                    self.num_actions = 0
         elif action_taken == Action.BACKWARD:
             self.ue5.move_backward(self.navigator.translation_increment)
         elif action_taken == Action.ROTATE_LEFT:

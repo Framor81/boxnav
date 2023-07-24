@@ -69,7 +69,9 @@ def simulate(args: Namespace, trial_num: int) -> None:
 
     fig, ax = plt.subplots()
     camera = Camera(fig)
-    while not agent.at_final_target() and agent.num_actions_taken() < args.max_actions:
+    while not agent.stuck and (
+        not agent.at_final_target() and agent.num_actions_taken() < args.max_actions
+    ):
         try:
             _, _ = agent.take_action()
         except TimeoutError as e:

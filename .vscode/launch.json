@@ -12,10 +12,9 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "perfect",
-                "test",
+                "wandering",
                 "--ue",
-                "--collect"
+                "--max_actions=100",
             ]
         }
     ]
