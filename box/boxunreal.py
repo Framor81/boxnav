@@ -5,6 +5,7 @@ from time import sleep
 from ue5osc import Communicator
 
 from .boxnavigator import Action, BoxNavigatorBase
+from .box import Pt
 
 
 class UENavigatorWrapper:
@@ -30,7 +31,7 @@ class UENavigatorWrapper:
             self.dataset_path.mkdir(parents=True, exist_ok=True)
 
         self.navigator.set_forward_increment(forward_increment)
-        self.raycast_length = forward_increment
+        self.raycast_length = forward_increment + 10.0
 
         self.trial_num = trial_num
         self.images_saved = 1
@@ -74,10 +75,11 @@ class UENavigatorWrapper:
 
         self.ue5.set_location(x, y, unreal_z)
 
-    # def sync_box_position_to_unreal(self) -> None:
-    #     """Move Boxsim agent to match Unreal Agent Position"""
-    #     unrealX, unrealY, _ = self.ue5.get_camera_location(0)
-    #     self.navigator.move(Pt(unrealX, unrealY))
+    def sync_box_position_to_unreal(self) -> None:
+        """Move Boxsim agent to match Unreal Agent Position"""
+        unrealX, unrealY, _ = self.ue5.get_location()
+        target = Pt(unrealX, unrealY)
+        self.navigator.position = target
 
     def sync_rotation(self) -> None:
         """Sync UE agent location to box agent."""
@@ -110,7 +112,7 @@ class UENavigatorWrapper:
             # Get location to get compared on our first move and 5th move
             if self.num_actions == 1:
                 self.first_action = self.ue5.get_location()
-            elif self.num_actions == 5:
+            elif self.num_actions == 10:
                 self.last_action = self.ue5.get_location()
 
             # Checks and sets a flag if we are stuck unable to move forward.
@@ -122,6 +124,7 @@ class UENavigatorWrapper:
             else:
                 if raycast == 0:
                     self.ue5.move_forward(self.navigator.forward_increment)
+                    self.sync_box_position_to_unreal()
                     self.num_actions = 0
         elif action_taken == Action.BACKWARD:
             self.ue5.move_backward(self.navigator.forward_increment)
