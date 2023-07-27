@@ -181,8 +181,23 @@ class BoxNavigatorBase:
 class PerfectNavigator(BoxNavigatorBase):
     """A "perfect" navigator that does not make mistakes."""
 
-    def __init__(self, position: Pt, rotation: float, env: BoxEnv) -> None:
-        super().__init__(position, rotation, env)
+    def __init__(
+        self,
+        position: Pt,
+        rotation: float,
+        env: BoxEnv,
+        distance_threshold: int,
+        forward_increment: float,
+        rotation_increment: float,
+    ) -> None:
+        super().__init__(
+            position,
+            rotation,
+            env,
+            distance_threshold,
+            forward_increment,
+            rotation_increment,
+        )
 
     def navigator_specific_action(self) -> Action:
         """The perfect navigator always chooses the correct action."""
@@ -199,9 +214,19 @@ class WanderingNavigator(BoxNavigatorBase):
         position: Pt,
         rotation: float,
         env: BoxEnv,
+        distance_threshold: int,
+        forward_increment: float,
+        rotation_increment: float,
         chance_of_random_action: float = 0.25,
     ) -> None:
-        super().__init__(position, rotation, env)
+        super().__init__(
+            position,
+            rotation,
+            env,
+            distance_threshold,
+            forward_increment,
+            rotation_increment,
+        )
         self.possible_actions = [
             Action.FORWARD,
             Action.ROTATE_LEFT,

@@ -100,7 +100,7 @@ class UENavigatorWrapper:
         """
 
         # We set the raycast length here to ensure the checked movement forward is being correctly compared.
-        self.ue5.set_raycast(self.raycast_length)
+        self.ue5.set_raycast_length(self.raycast_length)
 
         action_taken, correct_action = self.navigator.take_action()
         if self.dataset_path:

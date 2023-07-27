@@ -2,9 +2,11 @@ from argparse import ArgumentParser, Namespace
 from math import radians
 from pathlib import Path
 from random import randrange
+import random
 
 import matplotlib.pyplot as plt
 from celluloid import Camera
+from ue5osc import ObjectType
 
 from box.box import Pt, aligned_box
 from box.boxenv import BoxEnv
@@ -59,6 +61,7 @@ def simulate(args: Namespace, trial_num: int) -> None:
         box_env,
         args.distance_threshold,
         args.forward_increment,
+        args.rotation_increment,
     )
 
     # Wrap the agent if we want to connect to Unreal Engine
@@ -87,7 +90,8 @@ def simulate(args: Namespace, trial_num: int) -> None:
             raise SystemExit
 
         if agent.num_actions_taken() % 20 == 0 and args.randomize:
-            agent.ue5.set_texture(randrange(3), randrange(42))
+            random_object = random.choice(list(ObjectType))
+            agent.ue5.set_texture(random_object, randrange(42))
 
         # except ValueError as e:
         #     print(e)
