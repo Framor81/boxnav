@@ -53,7 +53,13 @@ def simulate(args: Namespace, trial_num: int) -> None:
     else:
         raise ValueError("Invalid value for navigator.")
 
-    agent = NavigatorConstructor(initial_position, initial_rotation, box_env)
+    agent = NavigatorConstructor(
+        initial_position,
+        initial_rotation,
+        box_env,
+        args.distance_threshold,
+        args.forward_increment,
+    )
 
     # Wrap the agent if we want to connect to Unreal Engine
     if args.ue:
@@ -174,7 +180,21 @@ def main():
         "--forward_increment",
         type=float,
         default=120.0,
-        help="Determines how far to forward each step.",
+        help="Determines how far to move forward each step.",
+    )
+
+    argparser.add_argument(
+        "--rotation_increment",
+        type=float,
+        default=radians(10),
+        help="Determines how much to rotate by for each step.",
+    )
+
+    argparser.add_argument(
+        "--distance_threshold",
+        type=int,
+        default=75,
+        help="Determines how close the robot has to be to the target to activate the next one.",
     )
 
     argparser.add_argument(

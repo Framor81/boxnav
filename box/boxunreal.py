@@ -30,8 +30,7 @@ class UENavigatorWrapper:
         if self.dataset_path:
             self.dataset_path.mkdir(parents=True, exist_ok=True)
 
-        self.navigator.set_forward_increment(forward_increment)
-        self.raycast_length = forward_increment + 10.0
+        self.raycast_length = forward_increment
 
         self.trial_num = trial_num
         self.images_saved = 1
@@ -54,6 +53,9 @@ class UENavigatorWrapper:
 
         self.ue5.set_quality(quality_level)
         self.reset()
+        """This sleep is included because in certain runs where you have more than one 
+        trial sometimes the reset can't keep up because it is still saving images, so  
+        the sleep ensures it has time to reset before more pictures are taken """
         sleep(1)
 
     def reset(self) -> None:
@@ -96,6 +98,8 @@ class UENavigatorWrapper:
         Raises:
             RuntimeError: If the action is not defined.
         """
+
+        # We set the raycast length here to ensure the checked movement forward is being correctly compared.
         self.ue5.set_raycast(self.raycast_length)
 
         action_taken, correct_action = self.navigator.take_action()
@@ -106,6 +110,15 @@ class UENavigatorWrapper:
             sleep(0.1)
 
         if action_taken == Action.FORWARD:
+            """_summary_ This method is first getting the length of the raycast between
+            the robot and any obstacle that may be in front of it and adds 1 to its
+            number of actions taken counter. If the raycast returns 0 this means there
+            is nothing in front of the robot and it's movement forward is valid so it
+            resets its actions taken to 0 and moves forward. However, if it is not valid
+            we instead get the location at this point in time and if after 10 forward
+            actions it is still unable to move forward, we compare it's position from
+            these two separate points in time and if it's less than a certain threshold
+            we'll set the stuck flag to True which will stop this trial early."""
             raycast = self.ue5.get_raycast()
             self.num_actions += 1
 

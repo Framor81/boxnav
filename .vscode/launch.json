@@ -12,7 +12,7 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "args": [
-                "wandering",
+                "perfect",
                 "--ue",
                 "--max_actions=100",
             ]

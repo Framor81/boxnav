@@ -26,7 +26,15 @@ class BoxNavigatorBase:
     location of the final box.
     """
 
-    def __init__(self, position: Pt, rotation: float, env: BoxEnv) -> None:
+    def __init__(
+        self,
+        position: Pt,
+        rotation: float,
+        env: BoxEnv,
+        distance_threshold: int,
+        forward_increment: float,
+        rotation_increment: float,
+    ) -> None:
         """Initialize member variables for any navigator.
 
         Args:
@@ -42,15 +50,12 @@ class BoxNavigatorBase:
         self.final_target = self.env.boxes[-1].target
 
         # TODO: find appropriate values for these
-        self.distance_threshold = 75
-        self.forward_increment = None
-        self.rotation_increment = radians(10)
+        self.distance_threshold = distance_threshold
+        self.forward_increment = forward_increment
+        self.rotation_increment = rotation_increment
         self.half_target_wedge = radians(6)
 
         self.actions_taken = 0
-
-    def set_forward_increment(self, forward_increment: float) -> None:
-        self.forward_increment = forward_increment
 
     def at_final_target(self) -> bool:
         """Is the navigator at the final target."""
