@@ -82,6 +82,8 @@ def simulate(args: Namespace, trial_num: int) -> None:
         not agent.at_final_target() and agent.num_actions_taken() < args.max_actions
     ):
         try:
+            # We set the raycast length here to ensure the checked movement forward is being correctly compared.
+            agent.ue5.set_raycast_length(agent.movement_increment)
             _, _ = agent.take_action()
         except TimeoutError as e:
             print(e)

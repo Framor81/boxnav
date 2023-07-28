@@ -19,7 +19,7 @@ class UENavigatorWrapper:
         ue_server_port: int,
         image_ext: str,
         trial_num: int,
-        forward_increment: float,
+        movement_increment: float,
         quality_level: int = 1,
     ) -> None:
         self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
@@ -30,7 +30,7 @@ class UENavigatorWrapper:
         if self.dataset_path:
             self.dataset_path.mkdir(parents=True, exist_ok=True)
 
-        self.raycast_length = forward_increment
+        self.raycast_length = movement_increment
 
         self.trial_num = trial_num
         self.images_saved = 1
@@ -38,9 +38,6 @@ class UENavigatorWrapper:
         self.num_actions = 0
         self.distance_moved = [0, 0]
         self.stuck = False
-
-        # We set the raycast length here to ensure the checked movement forward is being correctly compared.
-        self.ue5.set_raycast_length(self.raycast_length)
 
         try:
             # Sync UE and boxsim
