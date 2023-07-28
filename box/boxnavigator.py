@@ -32,7 +32,7 @@ class BoxNavigatorBase:
         rotation: float,
         env: BoxEnv,
         distance_threshold: int,
-        forward_increment: float,
+        movement_increment: float,
         rotation_increment: float,
     ) -> None:
         """Initialize member variables for any navigator.
@@ -51,7 +51,7 @@ class BoxNavigatorBase:
 
         # TODO: find appropriate values for these
         self.distance_threshold = distance_threshold
-        self.forward_increment = forward_increment
+        self.movement_increment = movement_increment
         self.rotation_increment = rotation_increment
         self.half_target_wedge = radians(6)
 
@@ -132,14 +132,14 @@ class BoxNavigatorBase:
 
     def move_forward(self) -> None:
         """Move forward by a fixed amount."""
-        new_x = self.position.x + self.forward_increment * cos(self.rotation)
-        new_y = self.position.y + self.forward_increment * sin(self.rotation)
+        new_x = self.position.x + self.movement_increment * cos(self.rotation)
+        new_y = self.position.y + self.movement_increment * sin(self.rotation)
         self.checked_move(Pt(new_x, new_y))
 
     def move_backward(self) -> None:
         """Move backward by a fixed amount."""
-        new_x = self.position.x - self.forward_increment * cos(self.rotation)
-        new_y = self.position.y - self.forward_increment * sin(self.rotation)
+        new_x = self.position.x - self.movement_increment * cos(self.rotation)
+        new_y = self.position.y - self.movement_increment * sin(self.rotation)
         self.checked_move(Pt(new_x, new_y))
 
     def checked_move(self, new_pt: Pt) -> None:

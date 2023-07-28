@@ -6,7 +6,7 @@ import random
 
 import matplotlib.pyplot as plt
 from celluloid import Camera
-from ue5osc import ObjectType
+from ue5osc import TexturedSurface
 
 from box.box import Pt, aligned_box
 from box.boxenv import BoxEnv
@@ -60,7 +60,7 @@ def simulate(args: Namespace, trial_num: int) -> None:
         initial_rotation,
         box_env,
         args.distance_threshold,
-        args.forward_increment,
+        args.movement_increment,
         args.rotation_increment,
     )
 
@@ -73,7 +73,7 @@ def simulate(args: Namespace, trial_num: int) -> None:
             args.ue_port,
             args.image_ext,
             trial_num,
-            args.forward_increment,
+            args.movement_increment,
         )
 
     fig, ax = plt.subplots()
@@ -90,8 +90,8 @@ def simulate(args: Namespace, trial_num: int) -> None:
             raise SystemExit
 
         if agent.num_actions_taken() % 20 == 0 and args.randomize:
-            random_object = random.choice(list(ObjectType))
-            agent.ue5.set_texture(random_object, randrange(42))
+            random_surface = random.choice(list(TexturedSurface))
+            agent.ue5.set_texture(random_surface, randrange(42))
 
         # except ValueError as e:
         #     print(e)
@@ -181,7 +181,7 @@ def main():
     )
 
     argparser.add_argument(
-        "--forward_increment",
+        "--movement_increment",
         type=float,
         default=120.0,
         help="Determines how far to move forward each step.",

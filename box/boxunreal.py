@@ -39,6 +39,9 @@ class UENavigatorWrapper:
         self.distance_moved = [0, 0]
         self.stuck = False
 
+        # We set the raycast length here to ensure the checked movement forward is being correctly compared.
+        self.ue5.set_raycast_length(self.raycast_length)
+
         try:
             # Sync UE and boxsim
             self.sync_positions()
@@ -99,9 +102,6 @@ class UENavigatorWrapper:
             RuntimeError: If the action is not defined.
         """
 
-        # We set the raycast length here to ensure the checked movement forward is being correctly compared.
-        self.ue5.set_raycast_length(self.raycast_length)
-
         action_taken, correct_action = self.navigator.take_action()
         if self.dataset_path:
             self.save_image(correct_action)
@@ -119,7 +119,7 @@ class UENavigatorWrapper:
             actions it is still unable to move forward, we compare it's position from
             these two separate points in time and if it's less than a certain threshold
             we'll set the stuck flag to True which will stop this trial early."""
-            raycast = self.ue5.get_raycast()
+            raycast = self.ue5.get_raycast_distance()
             self.num_actions += 1
 
             # Get location to get compared on our first move and 5th move
@@ -136,11 +136,11 @@ class UENavigatorWrapper:
                     self.stuck = True
             else:
                 if raycast == 0:
-                    self.ue5.move_forward(self.navigator.forward_increment)
+                    self.ue5.move_forward(self.navigator.movement_increment)
                     self.sync_box_position_to_unreal()
                     self.num_actions = 0
         elif action_taken == Action.BACKWARD:
-            self.ue5.move_backward(self.navigator.forward_increment)
+            self.ue5.move_backward(self.navigator.movement_increment)
         elif action_taken == Action.ROTATE_LEFT:
             self.sync_rotation()
         elif action_taken == Action.ROTATE_RIGHT:
