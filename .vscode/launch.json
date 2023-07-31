@@ -13,9 +13,8 @@
             "justMyCode": true,
             "args": [
                 "perfect",
-                "test",
                 "--ue",
-                "--collect"
+                "--max_actions=100",
             ]
         }
     ]

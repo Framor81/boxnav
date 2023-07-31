@@ -2,9 +2,11 @@ from argparse import ArgumentParser, Namespace
 from math import radians
 from pathlib import Path
 from random import randrange
+import random
 
 import matplotlib.pyplot as plt
 from celluloid import Camera
+from ue5osc import TexturedSurface
 
 from box.box import Pt, aligned_box
 from box.boxenv import BoxEnv
@@ -15,13 +17,13 @@ from box.boxunreal import UENavigatorWrapper
 # route 2, uses path w/ water fountain & stairs
 boxes = [
     aligned_box(left=4640, right=5240, lower=110, upper=1510, target=(4940, 870)),
-    aligned_box(left=3720, right=5240, lower=700, upper=1040, target=(4100, 870)),
-    aligned_box(left=3720, right=4120, lower=350, upper=1040, target=(4100, 400)),
+    aligned_box(left=3720, right=5240, lower=700, upper=1040, target=(4050, 750)),
+    aligned_box(left=3850, right=4120, lower=350, upper=1040, target=(4100, 400)),
     aligned_box(left=110, right=4120, lower=240, upper=540, target=(255, 390)),
     aligned_box(left=110, right=400, lower=-1980, upper=540, target=(255, -1900)),
-    aligned_box(left=-1550, right=400, lower=-1980, upper=-1650, target=(-825, -1815)),
-    aligned_box(left=-950, right=-700, lower=-1980, upper=3320, target=(-825, 2485)),
-    aligned_box(left=-950, right=230, lower=2150, upper=2820, target=(200, 2485)),
+    aligned_box(left=-1550, right=400, lower=-1980, upper=-1700, target=(-825, -1700)),
+    aligned_box(left=-900, right=-700, lower=-1980, upper=3320, target=(-825, 2485)),
+    aligned_box(left=-900, right=230, lower=2150, upper=2820, target=(200, 2485)),
 ]
 
 
@@ -53,7 +55,14 @@ def simulate(args: Namespace, trial_num: int) -> None:
     else:
         raise ValueError("Invalid value for navigator.")
 
-    agent = NavigatorConstructor(initial_position, initial_rotation, box_env)
+    agent = NavigatorConstructor(
+        initial_position,
+        initial_rotation,
+        box_env,
+        args.distance_threshold,
+        args.movement_increment,
+        args.rotation_increment,
+    )
 
     # Wrap the agent if we want to connect to Unreal Engine
     if args.ue:
@@ -64,12 +73,17 @@ def simulate(args: Namespace, trial_num: int) -> None:
             args.ue_port,
             args.image_ext,
             trial_num,
+            args.movement_increment,
         )
 
     fig, ax = plt.subplots()
     camera = Camera(fig)
-    while not agent.at_final_target() and agent.num_actions_taken() < args.max_actions:
+    while not agent.stuck and (
+        not agent.at_final_target() and agent.num_actions_taken() < args.max_actions
+    ):
         try:
+            # We set the raycast length here to ensure the checked movement forward is being correctly compared.
+            agent.ue5.set_raycast_length(agent.movement_increment)
             _, _ = agent.take_action()
         except TimeoutError as e:
             print(e)
@@ -77,8 +91,9 @@ def simulate(args: Namespace, trial_num: int) -> None:
                 agent.ue5.close_osc()
             raise SystemExit
 
-        if agent.num_actions_taken() % 20 == 0:
-            agent.ue5.console(f"ke * texture {randrange(3)} {randrange(42)}")
+        if agent.num_actions_taken() % 20 == 0 and args.randomize:
+            random_surface = random.choice(list(TexturedSurface))
+            agent.ue5.set_texture(random_surface, randrange(42))
 
         # except ValueError as e:
         #     print(e)
@@ -165,6 +180,34 @@ def main():
         type=int,
         default=1,
         help="Set the number of trials to execute.",
+    )
+
+    argparser.add_argument(
+        "--movement_increment",
+        type=float,
+        default=120.0,
+        help="Determines how far to move forward each step.",
+    )
+
+    argparser.add_argument(
+        "--rotation_increment",
+        type=float,
+        default=radians(10),
+        help="Determines how much to rotate by for each step.",
+    )
+
+    argparser.add_argument(
+        "--distance_threshold",
+        type=int,
+        default=75,
+        help="Determines how close the robot has to be to the target to activate the next one.",
+    )
+
+    argparser.add_argument(
+        "--randomize",
+        type=bool,
+        default=True,
+        help="Randomizes the texture of the walls, floors, and ceilings.",
     )
 
     args = argparser.parse_args()

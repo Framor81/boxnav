@@ -26,7 +26,15 @@ class BoxNavigatorBase:
     location of the final box.
     """
 
-    def __init__(self, position: Pt, rotation: float, env: BoxEnv) -> None:
+    def __init__(
+        self,
+        position: Pt,
+        rotation: float,
+        env: BoxEnv,
+        distance_threshold: int,
+        movement_increment: float,
+        rotation_increment: float,
+    ) -> None:
         """Initialize member variables for any navigator.
 
         Args:
@@ -42,9 +50,9 @@ class BoxNavigatorBase:
         self.final_target = self.env.boxes[-1].target
 
         # TODO: find appropriate values for these
-        self.distance_threshold = 75
-        self.translation_increment = 120
-        self.rotation_increment = radians(10)
+        self.distance_threshold = distance_threshold
+        self.movement_increment = movement_increment
+        self.rotation_increment = rotation_increment
         self.half_target_wedge = radians(6)
 
         self.actions_taken = 0
@@ -64,17 +72,14 @@ class BoxNavigatorBase:
         # Already facing correct direction
         if abs(self.signed_angle_to_target) < self.half_target_wedge:
             action = Action.FORWARD
-            self.target_angle = 0
 
         # Need to rotate left (think of unit circle); rotation indicated by positive degrees
         elif self.signed_angle_to_target > 0:
             action = Action.ROTATE_LEFT
-            self.target_angle = f"{-self.signed_angle_to_target:+.2f}"
 
         # Need to rotate right (think of unit circle); rotation indicated by negative degrees
         else:
             action = Action.ROTATE_RIGHT
-            self.target_angle = f"{-self.signed_angle_to_target:+.2f}"
 
         return action
 
@@ -124,14 +129,14 @@ class BoxNavigatorBase:
 
     def move_forward(self) -> None:
         """Move forward by a fixed amount."""
-        new_x = self.position.x + self.translation_increment * cos(self.rotation)
-        new_y = self.position.y + self.translation_increment * sin(self.rotation)
+        new_x = self.position.x + self.movement_increment * cos(self.rotation)
+        new_y = self.position.y + self.movement_increment * sin(self.rotation)
         self.checked_move(Pt(new_x, new_y))
 
     def move_backward(self) -> None:
         """Move backward by a fixed amount."""
-        new_x = self.position.x - self.translation_increment * cos(self.rotation)
-        new_y = self.position.y - self.translation_increment * sin(self.rotation)
+        new_x = self.position.x - self.movement_increment * cos(self.rotation)
+        new_y = self.position.y - self.movement_increment * sin(self.rotation)
         self.checked_move(Pt(new_x, new_y))
 
     def checked_move(self, new_pt: Pt) -> None:
@@ -140,7 +145,10 @@ class BoxNavigatorBase:
         if self.env.get_boxes_enclosing_point(new_pt):
             self.position = new_pt
         else:
-            raise ValueError("Cannot move to a position outside of all boxes.")
+            return
+
+    # TODO:
+    # Make a function that only allows movement inside of the box where the target is located.
 
     def rotate_right(self) -> None:
         """Rotate to the right by a set amount."""
@@ -173,8 +181,23 @@ class BoxNavigatorBase:
 class PerfectNavigator(BoxNavigatorBase):
     """A "perfect" navigator that does not make mistakes."""
 
-    def __init__(self, position: Pt, rotation: float, env: BoxEnv) -> None:
-        super().__init__(position, rotation, env)
+    def __init__(
+        self,
+        position: Pt,
+        rotation: float,
+        env: BoxEnv,
+        distance_threshold: int,
+        forward_increment: float,
+        rotation_increment: float,
+    ) -> None:
+        super().__init__(
+            position,
+            rotation,
+            env,
+            distance_threshold,
+            forward_increment,
+            rotation_increment,
+        )
 
     def navigator_specific_action(self) -> Action:
         """The perfect navigator always chooses the correct action."""
@@ -191,9 +214,19 @@ class WanderingNavigator(BoxNavigatorBase):
         position: Pt,
         rotation: float,
         env: BoxEnv,
+        distance_threshold: int,
+        forward_increment: float,
+        rotation_increment: float,
         chance_of_random_action: float = 0.25,
     ) -> None:
-        super().__init__(position, rotation, env)
+        super().__init__(
+            position,
+            rotation,
+            env,
+            distance_threshold,
+            forward_increment,
+            rotation_increment,
+        )
         self.possible_actions = [
             Action.FORWARD,
             Action.ROTATE_LEFT,

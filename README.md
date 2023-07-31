@@ -55,7 +55,7 @@ python boxsim.py <navigator> --anim_ext gif
 python boxsim.py <navigator> --ue
 
 # Runs the navigator in Python and Unreal Engine and generates a dataset
-python boxsim.py <navigator> --ue --save_images 'path/to/dataset'
+python boxsim.py <navigator> --save_images 'path/to/dataset'
 ~~~
 
 ### Note about Command Line Arguments

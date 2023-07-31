@@ -5,6 +5,7 @@ from time import sleep
 from ue5osc import Communicator
 
 from .boxnavigator import Action, BoxNavigatorBase
+from .box import Pt
 
 
 class UENavigatorWrapper:
@@ -18,7 +19,8 @@ class UENavigatorWrapper:
         ue_server_port: int,
         image_ext: str,
         trial_num: int,
-        quality_level: int = 2,
+        movement_increment: float,
+        quality_level: int = 1,
     ) -> None:
         self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
 
@@ -28,9 +30,14 @@ class UENavigatorWrapper:
         if self.dataset_path:
             self.dataset_path.mkdir(parents=True, exist_ok=True)
 
+        self.raycast_length = movement_increment
+
         self.trial_num = trial_num
         self.images_saved = 1
         self.image_ext = image_ext
+        self.num_stationary_moves = 0
+        self.distance_moved = [0, 0]
+        self.stuck = False
 
         try:
             # Sync UE and boxsim
@@ -46,6 +53,10 @@ class UENavigatorWrapper:
 
         self.ue5.set_quality(quality_level)
         self.reset()
+        """This sleep is included because in certain runs where you have more than one 
+        trial sometimes the reset can't keep up because it is still saving images, so  
+        the sleep ensures it has time to reset before more pictures are taken """
+        sleep(1)
 
     def reset(self) -> None:
         """Resets agent to its initial position."""
@@ -66,10 +77,11 @@ class UENavigatorWrapper:
 
         self.ue5.set_location(x, y, unreal_z)
 
-    # def sync_box_position_to_unreal(self) -> None:
-    #     """Move Boxsim agent to match Unreal Agent Position"""
-    #     unrealX, unrealY, _ = self.ue5.get_camera_location(0)
-    #     self.navigator.move(Pt(unrealX, unrealY))
+    def sync_box_position_to_unreal(self) -> None:
+        """Move Boxsim agent to match Unreal Agent Position"""
+        unrealX, unrealY, _ = self.ue5.get_location()
+        target = Pt(unrealX, unrealY)
+        self.navigator.position = target
 
     def sync_rotation(self) -> None:
         """Sync UE agent location to box agent."""
@@ -95,9 +107,27 @@ class UENavigatorWrapper:
             sleep(0.1)
 
         if action_taken == Action.FORWARD:
-            self.ue5.move_forward(self.navigator.translation_increment)
+            """_summary_ This method is first getting the length of the raycast between
+            the robot and any obstacle that may be in front of it and adds 1 to its
+            number of actions taken counter. If the raycast returns 0 this means there
+            is nothing in front of the robot and it's movement forward is valid so it
+            resets its actions taken to 0 and moves forward. However, if it is not valid
+            we instead get the location at this point in time and if after 10 forward
+            actions it is still unable to move forward, we compare it's position from
+            these two separate points in time and if it's less than a certain threshold
+            we'll set the stuck flag to True which will stop this trial early."""
+            raycast = self.ue5.get_raycast_distance()
+            self.num_stationary_moves += 1
+
+            # Checks and sets a flag if we are stuck unable to move forward.
+            self.stuck = self.num_stationary_moves >= 10
+
+            if raycast == 0:
+                self.ue5.move_forward(self.navigator.movement_increment)
+                self.sync_box_position_to_unreal()
+                self.num_stationary_moves = 0
         elif action_taken == Action.BACKWARD:
-            self.ue5.move_backward(self.navigator.translation_increment)
+            self.ue5.move_backward(self.navigator.movement_increment)
         elif action_taken == Action.ROTATE_LEFT:
             self.sync_rotation()
         elif action_taken == Action.ROTATE_RIGHT:
@@ -115,7 +145,8 @@ class UENavigatorWrapper:
             action = Action.ROTATE_LEFT
 
         # Generate the next filename
-        angle = str(self.navigator.target_angle).replace(".", "p")
+        # Negative because unreal using a left-hand coordinate system
+        angle = f"{-self.navigator.signed_angle_to_target:+.2f}".replace(".", "p")
         image_filepath = (
             f"{self.dataset_path}/"
             f"{self.trial_num:03}_{self.images_saved:06}_{angle}.{str(self.image_ext).lower()}"
