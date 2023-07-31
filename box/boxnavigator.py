@@ -72,17 +72,14 @@ class BoxNavigatorBase:
         # Already facing correct direction
         if abs(self.signed_angle_to_target) < self.half_target_wedge:
             action = Action.FORWARD
-            self.target_angle = 0
 
         # Need to rotate left (think of unit circle); rotation indicated by positive degrees
         elif self.signed_angle_to_target > 0:
             action = Action.ROTATE_LEFT
-            self.target_angle = f"{-self.signed_angle_to_target:+.2f}"
 
         # Need to rotate right (think of unit circle); rotation indicated by negative degrees
         else:
             action = Action.ROTATE_RIGHT
-            self.target_angle = f"{-self.signed_angle_to_target:+.2f}"
 
         return action
 
@@ -149,6 +146,9 @@ class BoxNavigatorBase:
             self.position = new_pt
         else:
             return
+
+    # TODO:
+    # Make a function that only allows movement inside of the box where the target is located.
 
     def rotate_right(self) -> None:
         """Rotate to the right by a set amount."""

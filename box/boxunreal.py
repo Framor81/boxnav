@@ -35,7 +35,7 @@ class UENavigatorWrapper:
         self.trial_num = trial_num
         self.images_saved = 1
         self.image_ext = image_ext
-        self.num_actions = 0
+        self.num_stationary_moves = 0
         self.distance_moved = [0, 0]
         self.stuck = False
 
@@ -117,25 +117,15 @@ class UENavigatorWrapper:
             these two separate points in time and if it's less than a certain threshold
             we'll set the stuck flag to True which will stop this trial early."""
             raycast = self.ue5.get_raycast_distance()
-            self.num_actions += 1
-
-            # Get location to get compared on our first move and 5th move
-            if self.num_actions == 1:
-                self.first_action = self.ue5.get_location()
-            elif self.num_actions == 10:
-                self.last_action = self.ue5.get_location()
+            self.num_stationary_moves += 1
 
             # Checks and sets a flag if we are stuck unable to move forward.
-            if self.num_actions >= 10:
-                x_diff = self.last_action[0] - self.first_action[0]
-                y_diff = self.last_action[1] - self.first_action[1]
-                if x_diff < 10 and y_diff < 10:
-                    self.stuck = True
-            else:
-                if raycast == 0:
-                    self.ue5.move_forward(self.navigator.movement_increment)
-                    self.sync_box_position_to_unreal()
-                    self.num_actions = 0
+            self.stuck = self.num_stationary_moves >= 10
+
+            if raycast == 0:
+                self.ue5.move_forward(self.navigator.movement_increment)
+                self.sync_box_position_to_unreal()
+                self.num_stationary_moves = 0
         elif action_taken == Action.BACKWARD:
             self.ue5.move_backward(self.navigator.movement_increment)
         elif action_taken == Action.ROTATE_LEFT:
@@ -155,7 +145,8 @@ class UENavigatorWrapper:
             action = Action.ROTATE_LEFT
 
         # Generate the next filename
-        angle = str(self.navigator.target_angle).replace(".", "p")
+        # Negative because unreal using a left-hand coordinate system
+        angle = f"{-self.navigator.signed_angle_to_target:+.2f}".replace(".", "p")
         image_filepath = (
             f"{self.dataset_path}/"
             f"{self.trial_num:03}_{self.images_saved:06}_{angle}.{str(self.image_ext).lower()}"
