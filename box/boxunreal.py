@@ -122,7 +122,8 @@ class UENavigatorWrapper:
             # Checks and sets a flag if we are stuck unable to move forward.
             self.stuck = self.num_stationary_moves >= 10
 
-            if raycast == 0:
+            # Sometimes large increments will hit the wall the target is on
+            if raycast == 0 or raycast > 30:
                 self.ue5.move_forward(self.navigator.movement_increment)
                 self.sync_box_position_to_unreal()
                 self.num_stationary_moves = 0
