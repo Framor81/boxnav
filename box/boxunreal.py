@@ -119,7 +119,6 @@ class UENavigatorWrapper:
             self.num_stationary_moves += 1
             if valid_movement is not False:
                 raycast = self.ue5.get_raycast_distance()
-                print(self.num_stationary_moves)
 
                 # Checks and sets a flag if we are stuck unable to move forward.
                 self.stuck = self.num_stationary_moves >= 10
@@ -130,8 +129,7 @@ class UENavigatorWrapper:
                     self.num_stationary_moves = 0
             else:
                 # In case an invalid move also causes to get stuck we are able to reset
-                self.stuck = self.num_stationary_moves >= 20
-                print(self.num_stationary_moves)
+                self.stuck = self.num_stationary_moves >= 10
         elif action_taken == Action.BACKWARD:
             self.ue5.move_backward(self.navigator.movement_increment)
         elif action_taken == Action.ROTATE_LEFT:
