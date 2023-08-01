@@ -56,6 +56,7 @@ class BoxNavigatorBase:
         self.half_target_wedge = radians(6)
 
         self.actions_taken = 0
+        self.current_box = self.env.boxes[0]  # Start in the first box
 
     def at_final_target(self) -> bool:
         """Is the navigator at the final target."""
@@ -99,21 +100,24 @@ class BoxNavigatorBase:
 
         # Also compute the 'correct' action
         correct_action = self.correct_action()
+        self.valid_movement = False
 
         match action_taken:
             case Action.FORWARD:
-                self.move_forward()
+                if self.move_forward():
+                    self.valid_movement = True
             case Action.ROTATE_LEFT:
                 self.rotate_left()
             case Action.ROTATE_RIGHT:
                 self.rotate_right()
             case Action.BACKWARD:
-                self.move_backward()
+                if self.move_backward():
+                    self.valid_movement = True
             case _:
                 raise NotImplementedError("Unknown action.")
 
         self.actions_taken += 1
-        return action_taken, correct_action
+        return action_taken, correct_action, self.valid_movement
 
     def navigator_specific_action(self) -> Action:
         raise NotImplementedError("Implemented in inheriting classes.")
@@ -126,29 +130,41 @@ class BoxNavigatorBase:
             and len(surrounding_boxes) > 1
         ):
             self.target = surrounding_boxes[-1].target
+            self.current_box = surrounding_boxes[-1]  # Update current box
 
     def move_forward(self) -> None:
         """Move forward by a fixed amount."""
         new_x = self.position.x + self.movement_increment * cos(self.rotation)
         new_y = self.position.y + self.movement_increment * sin(self.rotation)
-        self.checked_move(Pt(new_x, new_y))
+        if self.can_move_to_point(Pt(new_x, new_y)):
+            self.checked_move(Pt(new_x, new_y))
+            return True
 
     def move_backward(self) -> None:
         """Move backward by a fixed amount."""
         new_x = self.position.x - self.movement_increment * cos(self.rotation)
         new_y = self.position.y - self.movement_increment * sin(self.rotation)
-        self.checked_move(Pt(new_x, new_y))
+        if self.can_move_to_point(Pt(new_x, new_y)):
+            self.checked_move(Pt(new_x, new_y))
+            return True
+        return False
+
+    def can_move_to_point(self, pt: Pt) -> bool:
+        """Check if the navigator can move to the given point; if the point is inside
+        the current box, False otherwise."""
+        return self.current_box.point_is_inside(pt)
 
     def checked_move(self, new_pt: Pt) -> None:
-        """Jump to the given position if it is within a box."""
+        """Move to the given position if it is within the current target box.
 
-        if self.env.get_boxes_enclosing_point(new_pt):
+        Args:
+            new_pt (Pt): The new position to move to.
+        """
+        if self.current_box.point_is_inside(new_pt):
             self.position = new_pt
+            return True
         else:
-            return
-
-    # TODO:
-    # Make a function that only allows movement inside of the box where the target is located.
+            return False
 
     def rotate_right(self) -> None:
         """Rotate to the right by a set amount."""

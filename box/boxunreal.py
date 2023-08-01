@@ -99,7 +99,7 @@ class UENavigatorWrapper:
             RuntimeError: If the action is not defined.
         """
 
-        action_taken, correct_action = self.navigator.take_action()
+        action_taken, correct_action, valid_movement = self.navigator.take_action()
         if self.dataset_path:
             self.save_image(correct_action)
         else:
@@ -116,17 +116,22 @@ class UENavigatorWrapper:
             actions it is still unable to move forward, we compare it's position from
             these two separate points in time and if it's less than a certain threshold
             we'll set the stuck flag to True which will stop this trial early."""
-            raycast = self.ue5.get_raycast_distance()
             self.num_stationary_moves += 1
+            if valid_movement is not False:
+                raycast = self.ue5.get_raycast_distance()
+                print(self.num_stationary_moves)
 
-            # Checks and sets a flag if we are stuck unable to move forward.
-            self.stuck = self.num_stationary_moves >= 10
-
-            # Sometimes large increments will hit the wall the target is on
-            if raycast == 0 or raycast > 30:
-                self.ue5.move_forward(self.navigator.movement_increment)
-                self.sync_box_position_to_unreal()
-                self.num_stationary_moves = 0
+                # Checks and sets a flag if we are stuck unable to move forward.
+                self.stuck = self.num_stationary_moves >= 10
+                # Sometimes large increments will hit the wall the target is on
+                if raycast == 0:
+                    self.ue5.move_forward(self.navigator.movement_increment)
+                    self.sync_box_position_to_unreal()
+                    self.num_stationary_moves = 0
+            else:
+                # In case an invalid move also causes to get stuck we are able to reset
+                self.stuck = self.num_stationary_moves >= 20
+                print(self.num_stationary_moves)
         elif action_taken == Action.BACKWARD:
             self.ue5.move_backward(self.navigator.movement_increment)
         elif action_taken == Action.ROTATE_LEFT:
