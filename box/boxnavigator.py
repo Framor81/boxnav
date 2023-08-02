@@ -3,9 +3,9 @@ from math import cos, degrees, radians, sin
 from random import choice, random
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arrow, Wedge
+from matplotlib.patches import Arrow, Wedge, Rectangle
 
-from .box import Pt, close_enough
+from .box import Pt, close_enough, Box
 from .boxenv import BoxEnv
 
 
@@ -56,6 +56,7 @@ class BoxNavigatorBase:
         self.half_target_wedge = radians(6)
 
         self.actions_taken = 0
+        self.stuck = False  # Can only be True in unreal wrapper
         self.current_box = self.env.boxes[0]  # Start in the first box
 
     def at_final_target(self) -> bool:
@@ -160,11 +161,7 @@ class BoxNavigatorBase:
         Args:
             new_pt (Pt): The new position to move to.
         """
-        if self.current_box.point_is_inside(new_pt):
-            self.position = new_pt
-            return True
-        else:
-            return False
+        self.position = new_pt
 
     def rotate_right(self) -> None:
         """Rotate to the right by a set amount."""
@@ -192,6 +189,10 @@ class BoxNavigatorBase:
         ax.plot(self.target.x, self.target.y, "go")
         dxy = (self.target - self.position).normalized() * scale
         ax.add_patch(Arrow(self.position.x, self.position.y, dxy.x, dxy.y, color="g"))
+
+        # Check if the environment is of type TeleportingNavigator
+        if isinstance(self, TeleportingNavigator):
+            self.draw_rectangle_ahead(ax, scale)  # Draw the rectangle
 
 
 class PerfectNavigator(BoxNavigatorBase):
@@ -257,4 +258,76 @@ class WanderingNavigator(BoxNavigatorBase):
             choice(self.possible_actions)
             if random() < self.chance_of_random_action
             else self.correct_action()
+        )
+
+
+class TeleportingNavigator(BoxNavigatorBase):
+    """A navigator that wanders in a teleporting fashion toward the end goal."""
+
+    def __init__(
+        self,
+        position: Pt,
+        rotation: float,
+        env: BoxEnv,
+        distance_threshold: int,
+        forward_increment: float,
+        rotation_increment: float,
+    ) -> None:
+        super().__init__(
+            position,
+            rotation,
+            env,
+            distance_threshold,
+            forward_increment,
+            rotation_increment,
+        )
+        self.possible_actions = [
+            Action.FORWARD,
+            Action.ROTATE_LEFT,
+            Action.ROTATE_RIGHT,
+        ]
+
+    def navigator_specific_action(self) -> Action:
+        """The perfect navigator always chooses the correct action."""
+        return self.correct_action()
+
+    def draw_rectangle_ahead(self, ax: plt.Axes, scale: float) -> None:
+        """Draw a rectangle ahead of the agent's current location."""
+
+        # Calculate the position where the rectangle will be centered
+        ahead_pt = self.position + Pt(
+            scale * cos(self.rotation), scale * sin(self.rotation)
+        )
+
+        # Calculate half the width and height of the rectangle
+        half_width = self.current_box.width / 2
+        half_height = self.current_box.height / 2
+
+        # Adjust the position based on the agent's rotation angle
+        print(self.rotation)
+        if self.rotation <= 1.58:
+            adjusted_y = ahead_pt.y + half_height * sin(self.rotation)
+        else:
+            adjusted_y = self.current_box.lower + (half_height)
+        adjusted_x = ahead_pt.x + half_width * cos(self.rotation)
+
+        # Define the points of the rectangle based on the adjusted position
+        bottom_left = Pt(adjusted_x - half_width, adjusted_y - half_height)
+        upper_left = Pt(adjusted_x - half_width, adjusted_y + half_height)
+        upper_right = Pt(adjusted_x + half_width, adjusted_y + half_height)
+        target_inside_box = Pt(0, 0)  # This point is at the origin of the box
+
+        # Create a Box instance for the rectangle
+        ahead_box = Box(bottom_left, upper_left, upper_right, target_inside_box)
+
+        # Add the rectangle patch to the plot
+        ax.add_patch(
+            Rectangle(
+                ahead_box.origin,
+                ahead_box.width,
+                ahead_box.height,
+                ahead_box.angle_degrees,
+                facecolor="orange",  # Color of the rectangle
+                alpha=0.6,  # Transparency level of the rectangle
+            )
         )

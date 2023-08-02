@@ -57,6 +57,8 @@ class UENavigatorWrapper:
         trial sometimes the reset can't keep up because it is still saving images, so  
         the sleep ensures it has time to reset before more pictures are taken """
         sleep(1)
+        # We set the raycast length here to ensure the checked movement forward is being correctly compared.
+        self.ue5.set_raycast_length(self.raycast_length)
 
     def reset(self) -> None:
         """Resets agent to its initial position."""
