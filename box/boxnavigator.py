@@ -57,7 +57,9 @@ class BoxNavigatorBase:
 
         self.actions_taken = 0
         self.stuck = False  # Can only be True in unreal wrapper
+        self.previous_target = self.position
         self.current_box = self.env.boxes[0]  # Start in the first box
+        self.dominant_direction = self.determine_direction_to_target(self.target)
 
     def at_final_target(self) -> bool:
         """Is the navigator at the final target."""
@@ -123,6 +125,30 @@ class BoxNavigatorBase:
     def navigator_specific_action(self) -> Action:
         raise NotImplementedError("Implemented in inheriting classes.")
 
+    def determine_direction_to_target(self, current_target: Pt) -> str:
+        """Determine the 'direction' to the target based on changes in coordinates."""
+
+        # Get the location from the previous box's target
+        previous_target = self.previous_target
+
+        # Calculate the change in coordinates
+        delta_x = current_target.x - previous_target.x
+        delta_y = current_target.y - previous_target.y
+
+        # Determine the dominant change
+        if abs(delta_x) > abs(delta_y):
+            if delta_x > 0:
+                dominant_direction = "left"
+            else:
+                dominant_direction = "right"
+        else:
+            if delta_y > 0:
+                dominant_direction = "up"
+            else:
+                dominant_direction = "down"
+
+        return dominant_direction
+
     def update_target(self) -> None:
         """Switch to next target when close enough to current target."""
         surrounding_boxes = self.env.get_boxes_enclosing_point(self.position)
@@ -130,8 +156,10 @@ class BoxNavigatorBase:
             close_enough(self.position, self.target, self.distance_threshold)
             and len(surrounding_boxes) > 1
         ):
+            self.previous_target = self.target
             self.target = surrounding_boxes[-1].target
             self.current_box = surrounding_boxes[-1]  # Update current box
+            self.dominant_direction = self.determine_direction_to_target(self.target)
 
     def move_forward(self) -> None:
         """Move forward by a fixed amount."""
@@ -294,27 +322,40 @@ class TeleportingNavigator(BoxNavigatorBase):
     def draw_rectangle_ahead(self, ax: plt.Axes, scale: float) -> None:
         """Draw a rectangle ahead of the agent's current location."""
 
-        # Calculate the position where the rectangle will be centered
-        ahead_pt = self.position + Pt(
-            scale * cos(self.rotation), scale * sin(self.rotation)
-        )
-
         # Calculate half the width and height of the rectangle
         half_width = self.current_box.width / 2
         half_height = self.current_box.height / 2
 
-        # Adjust the position based on the agent's rotation angle
-        print(self.rotation)
-        if self.rotation <= 1.58:
-            adjusted_y = ahead_pt.y + half_height * sin(self.rotation)
+        # Calculate the position where the rectangle will be centered
+        if self.dominant_direction == "up":
+            ahead_pt = self.position + Pt(0, 0.5 * scale)
+            half_height = 50
+        elif self.dominant_direction == "down":
+            ahead_pt = self.position - Pt(0, 0.5 * scale)
+            half_height = 50
+        elif (
+            self.dominant_direction == "left"
+        ):  # Coordinates are switched from left and right
+            ahead_pt = self.position + Pt(0.5 * scale, 0)
+            half_width = 50
         else:
-            adjusted_y = self.current_box.lower + (half_height)
-        adjusted_x = ahead_pt.x + half_width * cos(self.rotation)
+            ahead_pt = self.position - Pt(0.5 * scale, 0)
+            half_width = 50
 
-        # Define the points of the rectangle based on the adjusted position
-        bottom_left = Pt(adjusted_x - half_width, adjusted_y - half_height)
-        upper_left = Pt(adjusted_x - half_width, adjusted_y + half_height)
-        upper_right = Pt(adjusted_x + half_width, adjusted_y + half_height)
+        # Calculate the position of the rectangle's center
+        rectangle_center_x = ahead_pt.x
+        rectangle_center_y = ahead_pt.y
+
+        # Define the points of the rectangle based on the center position
+        bottom_left = Pt(
+            rectangle_center_x - half_width, rectangle_center_y - half_height
+        )
+        upper_left = Pt(
+            rectangle_center_x - half_width, rectangle_center_y + half_height
+        )
+        upper_right = Pt(
+            rectangle_center_x + half_width, rectangle_center_y + half_height
+        )
         target_inside_box = Pt(0, 0)  # This point is at the origin of the box
 
         # Create a Box instance for the rectangle

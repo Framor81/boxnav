@@ -110,6 +110,8 @@ class Box:
         # Used for drawing
         self.left = min(self.A.x, self.B.x, self.C.x)
         self.lower = min(self.A.y, self.B.y, self.C.y)
+        self.upper = max(self.A.y, self.B.y, self.C.y)
+        self.right = max(self.A.x, self.B.x, self.C.x)
         self.origin = (self.left, self.lower)
         self.width = Pt.distance(self.B, self.C)
         self.height = Pt.distance(self.A, self.B)
