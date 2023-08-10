@@ -3,9 +3,9 @@ from math import cos, degrees, radians, sin
 from random import choice, random
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arrow, Wedge
+from matplotlib.patches import Arrow, Wedge, Rectangle
 
-from .box import Pt, close_enough
+from .box import Pt, close_enough, Box
 from .boxenv import BoxEnv
 
 
@@ -56,6 +56,10 @@ class BoxNavigatorBase:
         self.half_target_wedge = radians(6)
 
         self.actions_taken = 0
+        self.stuck = False  # Can only be True in unreal wrapper
+        self.previous_target = self.position
+        self.current_box = self.env.boxes[0]  # Start in the first box
+        self.dominant_direction = self.determine_direction_to_target(self.target)
 
     def at_final_target(self) -> bool:
         """Is the navigator at the final target."""
@@ -99,24 +103,51 @@ class BoxNavigatorBase:
 
         # Also compute the 'correct' action
         correct_action = self.correct_action()
+        self.valid_movement = False
 
         match action_taken:
             case Action.FORWARD:
-                self.move_forward()
+                if self.move_forward():
+                    self.valid_movement = True
             case Action.ROTATE_LEFT:
                 self.rotate_left()
             case Action.ROTATE_RIGHT:
                 self.rotate_right()
             case Action.BACKWARD:
-                self.move_backward()
+                if self.move_backward():
+                    self.valid_movement = True
             case _:
                 raise NotImplementedError("Unknown action.")
 
         self.actions_taken += 1
-        return action_taken, correct_action
+        return action_taken, correct_action, self.valid_movement
 
     def navigator_specific_action(self) -> Action:
         raise NotImplementedError("Implemented in inheriting classes.")
+
+    def determine_direction_to_target(self, current_target: Pt) -> str:
+        """Determine the 'direction' to the target based on changes in coordinates."""
+
+        # Get the location from the previous box's target
+        previous_target = self.previous_target
+
+        # Calculate the change in coordinates
+        delta_x = current_target.x - previous_target.x
+        delta_y = current_target.y - previous_target.y
+
+        # Determine the dominant change
+        if abs(delta_x) > abs(delta_y):
+            if delta_x > 0:
+                dominant_direction = "left"
+            else:
+                dominant_direction = "right"
+        else:
+            if delta_y > 0:
+                dominant_direction = "up"
+            else:
+                dominant_direction = "down"
+
+        return dominant_direction
 
     def update_target(self) -> None:
         """Switch to next target when close enough to current target."""
@@ -125,30 +156,40 @@ class BoxNavigatorBase:
             close_enough(self.position, self.target, self.distance_threshold)
             and len(surrounding_boxes) > 1
         ):
+            self.previous_target = self.target
             self.target = surrounding_boxes[-1].target
+            self.current_box = surrounding_boxes[-1]  # Update current box
+            self.dominant_direction = self.determine_direction_to_target(self.target)
 
     def move_forward(self) -> None:
         """Move forward by a fixed amount."""
         new_x = self.position.x + self.movement_increment * cos(self.rotation)
         new_y = self.position.y + self.movement_increment * sin(self.rotation)
-        self.checked_move(Pt(new_x, new_y))
+        if self.can_move_to_point(Pt(new_x, new_y)):
+            self.checked_move(Pt(new_x, new_y))
+            return True
 
     def move_backward(self) -> None:
         """Move backward by a fixed amount."""
         new_x = self.position.x - self.movement_increment * cos(self.rotation)
         new_y = self.position.y - self.movement_increment * sin(self.rotation)
-        self.checked_move(Pt(new_x, new_y))
+        if self.can_move_to_point(Pt(new_x, new_y)):
+            self.checked_move(Pt(new_x, new_y))
+            return True
+        return False
+
+    def can_move_to_point(self, pt: Pt) -> bool:
+        """Check if the navigator can move to the given point; if the point is inside
+        the current box, False otherwise."""
+        return self.current_box.point_is_inside(pt)
 
     def checked_move(self, new_pt: Pt) -> None:
-        """Jump to the given position if it is within a box."""
+        """Move to the given position if it is within the current target box.
 
-        if self.env.get_boxes_enclosing_point(new_pt):
-            self.position = new_pt
-        else:
-            return
-
-    # TODO:
-    # Make a function that only allows movement inside of the box where the target is located.
+        Args:
+            new_pt (Pt): The new position to move to.
+        """
+        self.position = new_pt
 
     def rotate_right(self) -> None:
         """Rotate to the right by a set amount."""
@@ -176,6 +217,10 @@ class BoxNavigatorBase:
         ax.plot(self.target.x, self.target.y, "go")
         dxy = (self.target - self.position).normalized() * scale
         ax.add_patch(Arrow(self.position.x, self.position.y, dxy.x, dxy.y, color="g"))
+
+        # Check if the environment is of type TeleportingNavigator
+        if isinstance(self, TeleportingNavigator):
+            self.draw_rectangle_ahead(ax, scale)  # Draw the rectangle
 
 
 class PerfectNavigator(BoxNavigatorBase):
@@ -241,4 +286,89 @@ class WanderingNavigator(BoxNavigatorBase):
             choice(self.possible_actions)
             if random() < self.chance_of_random_action
             else self.correct_action()
+        )
+
+
+class TeleportingNavigator(BoxNavigatorBase):
+    """A navigator that wanders in a teleporting fashion toward the end goal."""
+
+    def __init__(
+        self,
+        position: Pt,
+        rotation: float,
+        env: BoxEnv,
+        distance_threshold: int,
+        forward_increment: float,
+        rotation_increment: float,
+    ) -> None:
+        super().__init__(
+            position,
+            rotation,
+            env,
+            distance_threshold,
+            forward_increment,
+            rotation_increment,
+        )
+        self.possible_actions = [
+            Action.FORWARD,
+            Action.ROTATE_LEFT,
+            Action.ROTATE_RIGHT,
+        ]
+
+    def navigator_specific_action(self) -> Action:
+        """The perfect navigator always chooses the correct action."""
+        return self.correct_action()
+
+    def draw_rectangle_ahead(self, ax: plt.Axes, scale: float) -> None:
+        """Draw a rectangle ahead of the agent's current location."""
+
+        # Calculate half the width and height of the rectangle
+        half_width = self.current_box.width / 2
+        half_height = self.current_box.height / 2
+
+        # Calculate the position where the rectangle will be centered
+        if self.dominant_direction == "up":
+            ahead_pt = self.position + Pt(0, 0.5 * scale)
+            half_height = 50
+        elif self.dominant_direction == "down":
+            ahead_pt = self.position - Pt(0, 0.5 * scale)
+            half_height = 50
+        elif (
+            self.dominant_direction == "left"
+        ):  # Coordinates are switched from left and right
+            ahead_pt = self.position + Pt(0.5 * scale, 0)
+            half_width = 50
+        else:
+            ahead_pt = self.position - Pt(0.5 * scale, 0)
+            half_width = 50
+
+        # Calculate the position of the rectangle's center
+        rectangle_center_x = ahead_pt.x
+        rectangle_center_y = ahead_pt.y
+
+        # Define the points of the rectangle based on the center position
+        bottom_left = Pt(
+            rectangle_center_x - half_width, rectangle_center_y - half_height
+        )
+        upper_left = Pt(
+            rectangle_center_x - half_width, rectangle_center_y + half_height
+        )
+        upper_right = Pt(
+            rectangle_center_x + half_width, rectangle_center_y + half_height
+        )
+        target_inside_box = Pt(0, 0)  # This point is at the origin of the box
+
+        # Create a Box instance for the rectangle
+        ahead_box = Box(bottom_left, upper_left, upper_right, target_inside_box)
+
+        # Add the rectangle patch to the plot
+        ax.add_patch(
+            Rectangle(
+                ahead_box.origin,
+                ahead_box.width,
+                ahead_box.height,
+                ahead_box.angle_degrees,
+                facecolor="orange",  # Color of the rectangle
+                alpha=0.6,  # Transparency level of the rectangle
+            )
         )
