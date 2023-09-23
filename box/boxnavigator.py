@@ -1,6 +1,6 @@
 from enum import Enum
 from math import cos, degrees, radians, sin
-from random import choice, random
+from random import choice, random, uniform
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Arrow, Wedge, Rectangle
@@ -14,6 +14,7 @@ class Action(Enum):
     BACKWARD = 1
     ROTATE_LEFT = 2
     ROTATE_RIGHT = 3
+    TELEPORT = 4
 
     def __str__(self) -> str:
         return self.name
@@ -116,6 +117,8 @@ class BoxNavigatorBase:
             case Action.BACKWARD:
                 if self.move_backward():
                     self.valid_movement = True
+            case Action.TELEPORT:
+                self.teleport()
             case _:
                 raise NotImplementedError("Unknown action.")
 
@@ -160,6 +163,9 @@ class BoxNavigatorBase:
             self.target = surrounding_boxes[-1].target
             self.current_box = surrounding_boxes[-1]  # Update current box
             self.dominant_direction = self.determine_direction_to_target(self.target)
+
+    def teleport(self) -> None:
+        self.checked_move(Pt(self.random_point()))
 
     def move_forward(self) -> None:
         """Move forward by a fixed amount."""
@@ -300,6 +306,9 @@ class TeleportingNavigator(BoxNavigatorBase):
         distance_threshold: int,
         forward_increment: float,
         rotation_increment: float,
+        ahead_box=None,
+        chance_of_random_action: float = 0.25,
+        teleport_target=None,
     ) -> None:
         super().__init__(
             position,
@@ -309,15 +318,14 @@ class TeleportingNavigator(BoxNavigatorBase):
             forward_increment,
             rotation_increment,
         )
-        self.possible_actions = [
-            Action.FORWARD,
-            Action.ROTATE_LEFT,
-            Action.ROTATE_RIGHT,
-        ]
+        self.possible_actions = [Action.TELEPORT]
+
+        self.chance_of_random_action = chance_of_random_action
+        self.ahead_box = ahead_box
+        self.teleport_target = teleport_target
 
     def navigator_specific_action(self) -> Action:
-        """The perfect navigator always chooses the correct action."""
-        return self.correct_action()
+        return self.possible_actions
 
     def draw_rectangle_ahead(self, ax: plt.Axes, scale: float) -> None:
         """Draw a rectangle ahead of the agent's current location."""
@@ -328,18 +336,28 @@ class TeleportingNavigator(BoxNavigatorBase):
 
         # Calculate the position where the rectangle will be centered
         if self.dominant_direction == "up":
-            ahead_pt = self.position + Pt(0, 0.5 * scale)
+            ahead_pt = Pt(
+                ((self.current_box.right + self.current_box.left) / 2),
+                self.position.y + 0.5 * scale,
+            )
             half_height = 50
         elif self.dominant_direction == "down":
-            ahead_pt = self.position - Pt(0, 0.5 * scale)
+            ahead_pt = Pt(
+                ((self.current_box.right + self.current_box.left) / 2),
+                self.position.y - 0.5 * scale,
+            )
             half_height = 50
-        elif (
-            self.dominant_direction == "left"
-        ):  # Coordinates are switched from left and right
-            ahead_pt = self.position + Pt(0.5 * scale, 0)
+        elif self.dominant_direction == "left":  # Coords are switched from left & right
+            ahead_pt = Pt(
+                (self.position.x + 0.5 * scale),
+                (self.current_box.upper + self.current_box.lower) / 2,
+            )
             half_width = 50
         else:
-            ahead_pt = self.position - Pt(0.5 * scale, 0)
+            ahead_pt = Pt(
+                (self.position.x - 0.5 * scale),
+                (self.current_box.upper + self.current_box.lower) / 2,
+            )
             half_width = 50
 
         # Calculate the position of the rectangle's center
@@ -359,16 +377,27 @@ class TeleportingNavigator(BoxNavigatorBase):
         target_inside_box = Pt(0, 0)  # This point is at the origin of the box
 
         # Create a Box instance for the rectangle
-        ahead_box = Box(bottom_left, upper_left, upper_right, target_inside_box)
+        self.ahead_box = Box(bottom_left, upper_left, upper_right, target_inside_box)
 
         # Add the rectangle patch to the plot
         ax.add_patch(
             Rectangle(
-                ahead_box.origin,
-                ahead_box.width,
-                ahead_box.height,
-                ahead_box.angle_degrees,
+                self.ahead_box.origin,
+                self.ahead_box.width,
+                self.ahead_box.height,
+                self.ahead_box.angle_degrees,
                 facecolor="orange",  # Color of the rectangle
                 alpha=0.6,  # Transparency level of the rectangle
             )
         )
+
+        self.teleport_target = self.random_point()
+
+    def random_point(self):  # Generate random x and y coords within the box's bounds
+        x = uniform(self.ahead_box.left, self.ahead_box.right)
+        y = uniform(self.ahead_box.lower, self.ahead_box.upper)
+
+        # Create a Pt object to represent the random point
+        random_pt = Pt(x, y)
+        self.teleport_target = random_pt
+        return random_pt
