@@ -61,6 +61,8 @@ class BoxNavigatorBase:
         self.previous_target = self.position
         self.current_box = self.env.boxes[0]  # Start in the first box
         self.dominant_direction = self.determine_direction_to_target(self.target)
+        self.anchor_1 = self.rotation_anchor(self.target, self.current_box)[0]
+        self.anchor_2 = self.rotation_anchor(self.target, self.current_box)[1]
 
     def at_final_target(self) -> bool:
         """Is the navigator at the final target."""
@@ -152,6 +154,26 @@ class BoxNavigatorBase:
 
         return dominant_direction
 
+    def rotation_anchor(self, current_target: Pt, current_box: Box) -> [Pt]:
+        if self.dominant_direction in ["left", "right"]:
+            # Calculate the distance from the center to the left and right sides of the box
+            width_half = current_box.width / 2
+
+            anchor_1 = Pt(current_target.x - width_half, current_target.y)
+            anchor_2 = Pt(current_target.x + width_half, current_target.y)
+        elif self.dominant_direction in ["up", "down"]:
+            # Calculate the distance from the center to the top and bottom sides of the box
+            height_half = current_box.height / 2
+
+            anchor_1 = Pt(current_target.x, current_target.y - height_half)
+            anchor_2 = Pt(current_target.x, current_target.y + height_half)
+        else:
+            # Default to using the current target
+            self.anchor_1 = Pt(current_target.x, current_target.y)
+            self.anchor_2 = Pt(current_target.x, current_target.y)
+
+        return [Pt(anchor_1.x, anchor_1.y), Pt(anchor_2.x, anchor_2.y)]
+
     def update_target(self) -> None:
         """Switch to next target when close enough to current target."""
         surrounding_boxes = self.env.get_boxes_enclosing_point(self.position)
@@ -163,6 +185,8 @@ class BoxNavigatorBase:
             self.target = surrounding_boxes[-1].target
             self.current_box = surrounding_boxes[-1]  # Update current box
             self.dominant_direction = self.determine_direction_to_target(self.target)
+            self.anchor_1 = self.rotation_anchor(self.target, self.current_box)[0]
+            self.anchor_2 = self.rotation_anchor(self.target, self.current_box)[1]
 
     def teleport(self) -> None:
         self.checked_move(self.random_point())
@@ -227,6 +251,14 @@ class BoxNavigatorBase:
         # Check if the environment is of type TeleportingNavigator
         if isinstance(self, TeleportingNavigator):
             self.draw_current_past_rectangle(ax, scale)  # Draw the rectangle
+            # print(self.counter)
+            # # Plot anchor 1 and 2
+            # print(self.anchor_1)
+            # print(self.anchor_2)
+            ax.plot(self.anchor_1.x, self.anchor_1.y, "mx")
+            dxy = (self.anchor_1 - self.position).normalized() * scale
+            ax.plot(self.anchor_1.x, self.anchor_1.y, "mx")
+            dxy = (self.anchor_1 - self.position).normalized() * scale
 
 
 class PerfectNavigator(BoxNavigatorBase):
@@ -320,7 +352,6 @@ class TeleportingNavigator(BoxNavigatorBase):
         )
         self.possible_actions = [Action.TELEPORT]
 
-        self.chance_of_random_action = chance_of_random_action
         self.ahead_box = ahead_box
         self.teleport_target = teleport_target
         self.counter = 0
@@ -403,10 +434,9 @@ class TeleportingNavigator(BoxNavigatorBase):
                 alpha=0.6,  # Transparency level of the rectangle
             )
         )
-        # self.teleport_target = self.random_point()
 
     def draw_current_past_rectangle(self, ax: plt.Axes, scale: float) -> None:
-        """Draw a rectangle ahead of the agent's current location and it's current one."""
+        """Draw a rectangle ahead of the agent's current location and it's current box."""
         if self.counter == 1:
             self.draw_rectangle_ahead(ax, scale)
         else:
@@ -422,7 +452,9 @@ class TeleportingNavigator(BoxNavigatorBase):
                 )
             )
 
-    def random_point(self):  # Generate random x and y coords within the box's bounds
+    def random_point(
+        self,
+    ) -> Pt:  # Generate random x and y coords within the box's bounds
         self.counter += 1
         if self.counter == 1:
             return Pt(self.position.x, self.position.y)
