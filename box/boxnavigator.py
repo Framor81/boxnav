@@ -1,5 +1,5 @@
 from enum import Enum
-from math import cos, degrees, radians, sin
+from math import atan2, cos, degrees, radians, sin
 from random import choice, random, uniform
 
 import matplotlib.pyplot as plt
@@ -155,18 +155,18 @@ class BoxNavigatorBase:
         return dominant_direction
 
     def rotation_anchor(self, current_target: Pt, current_box: Box) -> [Pt]:
+        width_half = current_box.width / 2
+        height_half = current_box.height / 2
+
         if self.dominant_direction in ["left", "right"]:
             # Calculate the distance from the center to the left and right sides of the box
-            width_half = current_box.width / 2
-
-            anchor_1 = Pt(current_target.x - width_half, current_target.y)
-            anchor_2 = Pt(current_target.x + width_half, current_target.y)
-        elif self.dominant_direction in ["up", "down"]:
-            # Calculate the distance from the center to the top and bottom sides of the box
-            height_half = current_box.height / 2
-
             anchor_1 = Pt(current_target.x, current_target.y - height_half)
             anchor_2 = Pt(current_target.x, current_target.y + height_half)
+
+        elif self.dominant_direction in ["up", "down"]:
+            # Calculate the distance from the center to the top and bottom sides of the box
+            anchor_1 = Pt(current_target.x - width_half, current_target.y)
+            anchor_2 = Pt(current_target.x + width_half, current_target.y)
         else:
             # Default to using the current target
             self.anchor_1 = Pt(current_target.x, current_target.y)
@@ -189,7 +189,12 @@ class BoxNavigatorBase:
             self.anchor_2 = self.rotation_anchor(self.target, self.current_box)[1]
 
     def teleport(self) -> None:
-        self.checked_move(self.random_point())
+        # Teleport to a random point with a random rotation
+        random_point = self.random_point()
+        self.checked_move(random_point)
+        self.position = random_point
+        random_angle = self.random_rotation(self.anchor_1, self.anchor_2)
+        self.rotation = random_angle
 
     def move_forward(self) -> None:
         """Move forward by a fixed amount."""
@@ -251,13 +256,9 @@ class BoxNavigatorBase:
         # Check if the environment is of type TeleportingNavigator
         if isinstance(self, TeleportingNavigator):
             self.draw_current_past_rectangle(ax, scale)  # Draw the rectangle
-            # print(self.counter)
-            # # Plot anchor 1 and 2
-            # print(self.anchor_1)
-            # print(self.anchor_2)
             ax.plot(self.anchor_1.x, self.anchor_1.y, "mx")
             dxy = (self.anchor_1 - self.position).normalized() * scale
-            ax.plot(self.anchor_1.x, self.anchor_1.y, "mx")
+            ax.plot(self.anchor_2.x, self.anchor_2.y, "mx")
             dxy = (self.anchor_1 - self.position).normalized() * scale
 
 
@@ -355,6 +356,7 @@ class TeleportingNavigator(BoxNavigatorBase):
         self.ahead_box = ahead_box
         self.teleport_target = teleport_target
         self.counter = 0
+        self.box_size = 50
         self.pause_box = False
 
     def navigator_specific_action(self) -> Action:
@@ -378,27 +380,27 @@ class TeleportingNavigator(BoxNavigatorBase):
         if self.dominant_direction == "up":
             ahead_pt = Pt(
                 ((self.current_box.right + self.current_box.left) / 2),
-                self.position.y + 0.25 * scale,
+                self.position.y + 0.20 * scale,
             )
-            half_height = 50
+            half_height = self.box_size
         elif self.dominant_direction == "down":
             ahead_pt = Pt(
                 ((self.current_box.right + self.current_box.left) / 2),
-                self.position.y - 0.25 * scale,
+                self.position.y - 0.20 * scale,
             )
-            half_height = 50
+            half_height = self.box_size
         elif self.dominant_direction == "left":  # Coords are switched from left & right
             ahead_pt = Pt(
-                (self.position.x + 0.25 * scale),
+                (self.position.x + 0.20 * scale),
                 (self.current_box.upper + self.current_box.lower) / 2,
             )
-            half_width = 50
+            half_width = self.box_size
         else:
             ahead_pt = Pt(
-                (self.position.x - 0.25 * scale),
+                (self.position.x - 0.20 * scale),
                 (self.current_box.upper + self.current_box.lower) / 2,
             )
-            half_width = 50
+            half_width = self.box_size
 
         # Calculate the position of the rectangle's center
         rectangle_center_x = ahead_pt.x
@@ -462,7 +464,24 @@ class TeleportingNavigator(BoxNavigatorBase):
             x = uniform(self.ahead_box.left, self.ahead_box.right)
             y = uniform(self.ahead_box.lower, self.ahead_box.upper)
 
-            # Create a Pt object to represent the random point
+            # Create a random point
             random_pt = Pt(x, y)
             self.teleport_target = random_pt
             return random_pt
+
+    def random_rotation(self, anchor_1: Pt, anchor_2: Pt) -> float:
+        if self.current_box.point_is_inside(self.target):
+            # If the target is inside the current box, calculate the angle to the target
+            # this is in order to prevent confusing directions where we may face away from the target
+            angle = atan2(
+                self.target.y - self.position.y, self.target.x - self.position.x
+            )
+        else:
+            # Calculate a random point between anchor_1 and anchor_2
+            random_x = uniform(anchor_1.x, anchor_2.x)
+            random_y = uniform(anchor_1.y, anchor_2.y)
+
+            # calculate the angle from the agent to this random_point and use this as our angle
+            angle = atan2(random_y - self.position.y, random_x - self.position.x)
+
+        return angle
