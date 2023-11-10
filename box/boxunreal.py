@@ -53,8 +53,8 @@ class UENavigatorWrapper:
 
         self.ue5.set_quality(quality_level)
         self.reset()
-        """This sleep is included because in certain runs where you have more than one 
-        trial sometimes the reset can't keep up because it is still saving images, so  
+        """This sleep is included because in certain runs where you have more than one
+        trial sometimes the reset can't keep up because it is still saving images, so
         the sleep ensures it has time to reset before more pictures are taken """
         sleep(1)
 
