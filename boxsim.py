@@ -10,20 +10,20 @@ from ue5osc import TexturedSurface
 
 from box.box import Pt, aligned_box
 from box.boxenv import BoxEnv
-from box.boxnavigator import PerfectNavigator, WanderingNavigator
+from box.boxnavigator import PerfectNavigator, WanderingNavigator, TeleportingNavigator
 from box.boxunreal import UENavigatorWrapper
 
 # TODO: this should probably be a command line argument (pass in a list of coordinates)
 # route 2, uses path w/ water fountain & stairs
 boxes = [
     aligned_box(left=4640, right=5240, lower=110, upper=1510, target=(4940, 870)),
-    aligned_box(left=3720, right=5240, lower=700, upper=1040, target=(4050, 750)),
-    aligned_box(left=3850, right=4120, lower=350, upper=1040, target=(4100, 400)),
-    aligned_box(left=110, right=4120, lower=240, upper=540, target=(255, 390)),
-    aligned_box(left=110, right=400, lower=-1980, upper=540, target=(255, -1900)),
-    aligned_box(left=-1550, right=400, lower=-1980, upper=-1700, target=(-825, -1700)),
+    aligned_box(left=3720, right=5240, lower=700, upper=1040, target=(4000, 870)),
+    aligned_box(left=3850, right=4120, lower=360, upper=1040, target=(4000, 400)),
+    aligned_box(left=110, right=4120, lower=260, upper=540, target=(255, 400)),
+    aligned_box(left=150, right=400, lower=-1980, upper=540, target=(255, -1850)),
+    aligned_box(left=-1550, right=400, lower=-1980, upper=-1720, target=(-825, -1850)),
     aligned_box(left=-900, right=-700, lower=-1980, upper=3320, target=(-825, 2485)),
-    aligned_box(left=-900, right=230, lower=2150, upper=2820, target=(200, 2485)),
+    aligned_box(left=-900, right=230, lower=2150, upper=2820, target=(150, 2485)),
 ]
 
 
@@ -52,6 +52,8 @@ def simulate(args: Namespace, trial_num: int) -> None:
         NavigatorConstructor = WanderingNavigator
     elif args.navigator == "perfect":
         NavigatorConstructor = PerfectNavigator
+    elif args.navigator == "teleport":
+        NavigatorConstructor = TeleportingNavigator
     else:
         raise ValueError("Invalid value for navigator.")
 
@@ -82,18 +84,17 @@ def simulate(args: Namespace, trial_num: int) -> None:
         not agent.at_final_target() and agent.num_actions_taken() < args.max_actions
     ):
         try:
-            # We set the raycast length here to ensure the checked movement forward is being correctly compared.
-            agent.ue5.set_raycast_length(agent.movement_increment)
-            _, _ = agent.take_action()
+            _ = agent.take_action()
         except TimeoutError as e:
             print(e)
             if isinstance(agent, UENavigatorWrapper):
                 agent.ue5.close_osc()
             raise SystemExit
 
-        if agent.num_actions_taken() % 20 == 0 and args.randomize:
-            random_surface = random.choice(list(TexturedSurface))
-            agent.ue5.set_texture(random_surface, randrange(42))
+        if isinstance(agent, UENavigatorWrapper):
+            if agent.num_actions_taken() % 20 == 0 and args.randomize:
+                random_surface = random.choice(list(TexturedSurface))
+                agent.ue5.set_texture(random_surface, randrange(42))
 
         # except ValueError as e:
         #     print(e)
@@ -212,7 +213,7 @@ def main():
 
     args = argparser.parse_args()
 
-    possible_navigators = ["wandering", "perfect"]
+    possible_navigators = ["wandering", "perfect", "teleport"]
     if args.navigator not in possible_navigators:
         raise ValueError(
             f"Invalid navigator type: {args.navigator}. Possible options: {'|'.join(possible_navigators)}"
