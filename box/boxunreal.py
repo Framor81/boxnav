@@ -138,6 +138,9 @@ class UENavigatorWrapper:
             self.sync_rotation()
         elif action_taken == Action.ROTATE_RIGHT:
             self.sync_rotation()
+        elif action_taken == Action.TELEPORT:
+            self.sync_positions()
+            self.sync_rotation()
         else:
             raise RuntimeError(f"Undefined action: {action_taken}")
 
