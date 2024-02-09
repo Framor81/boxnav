@@ -1,16 +1,17 @@
 {
-    "cSpell.words": [
-        "argparser",
-        "boxenv",
-        "boxnavigator",
-        "boxnavigatorbase",
-        "boxsim",
-        "pipi",
-        "xlim",
-        "ylim"
-    ],
-    "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter"
-    },
-    "python.formatting.provider": "none"
+  "cSpell.words": [
+    "argparser",
+    "boxenv",
+    "boxnavigator",
+    "boxnavigatorbase",
+    "boxsim",
+    "dtype",
+    "pipi",
+    "xlim",
+    "ylim"
+  ],
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "python.formatting.provider": "none"
 }
