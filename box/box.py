@@ -4,9 +4,23 @@ from math import atan2, degrees, sqrt
 
 tup2 = tuple[float, float]
 
+"""
+Box.py defines a set of classes and functions to work with 2D geometric points (Pt) and boxes (Box).
+This uses a 2D Cartesian coordinate system. 
+"""
 
 def approx_equal(a: float, b: float, threshold: float = 0.0001) -> bool:
-    """Compare to floats and return true if they are approximately equal."""
+    """
+    Compare two floats and return true if they are approximately equal.
+    
+    Args:
+        a (float): first float to compare
+        b (float): second float to compare
+        threshold (float, optional): threshold in which a and b will be allowed to differ by (default 0.0001)
+
+    Returns:
+        bool: Is the distance between a and b less than the threshold.
+    """
     return abs(a - b) < threshold
 
 
@@ -39,7 +53,7 @@ class Pt:
         return (self.x, self.y)
 
     def normalized(self) -> Pt:
-        """Normalize as a 2D vector."""
+        """Normalize Pt as a 2D vector."""
         magnitude = self.magnitude() + 0.0000001
         return Pt(self.x / magnitude, self.y / magnitude)
 
@@ -48,23 +62,23 @@ class Pt:
         return sqrt(self.x * self.x + self.y * self.y)
 
     def angle_between(self, other: Pt) -> float:
-        """Calculate radian value of the angle between two points."""
+        """Calculate radian value of the angle between two points (current Pt and other Pt)."""
         return atan2(Pt.determinant(self, other), Pt.scalar_product(self, other))
 
     def __mul__(self, scale: float) -> Pt:
-        """Scale this vector."""
+        """Scale and return scaled vector."""
         return Pt(self.x * scale, self.y * scale)
 
     def __sub__(self, other: Pt) -> Pt:
-        """Subtract this point from another."""
+        """Subtract current point from another and return a new Pt with the differences in x and y."""
         return Pt(self.x - other.x, self.y - other.y)
 
     def __add__(self, other: Pt) -> Pt:
-        """Add this point to another."""
+        """Add this point to another and return added Pt."""
         return Pt(self.x + other.x, self.y + other.y)
 
     def __eq__(self, other: Pt) -> bool:
-        """Does this Pt's x and y coordinates match close to another Pt."""
+        """Is this Pt's x and y coordinates close to another Pt."""
         return approx_equal(self.x, other.x) and approx_equal(self.y, other.y)
 
     def __str__(self) -> str:
@@ -92,8 +106,8 @@ class Box:
 
         Args:
             lower_left (Pt): lower left origin point
-            B (Pt): next point clockwise
-            C (Pt): next point clockwise
+            upper_left (Pt): next point clockwise (Upper left)
+            upper_right (Pt): next point clockwise (Upper right)
             target (Pt): target location inside box
         """
         self.A = lower_left

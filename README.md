@@ -11,7 +11,7 @@ A simple playground for making an agent navigate around some directed corridors 
 Unreal Engine is needed for data collection, and you will want to either download our packaged game or the version on Gitea. You will also need to install [ue5osc](https://github.com/arcslaboratory/ue5osc) using the instructions found in its README.
 
 ### Beginning the Simulation in UE5
-Clone this repository. Move into the cloned boxnav directory. Press play on your Unreal Engine project.
+Clone this repository. Navigate into the cloned boxnav directory. Press play on your Unreal Engine project.
 
 Then to kick off the simulation you must first ensure the following steps are followed:
 
@@ -43,6 +43,8 @@ conda activate <env_name>
 ```
 
 5. After activating the environment, the script is now ready to run with the commands:
+
+        a.) *Note: all commands calling --ue require Unreal Engine 5 to already be open.*
 
 ~~~bash
 # Runs the navigator in Python
