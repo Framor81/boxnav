@@ -35,6 +35,12 @@ class BoxWorldEnv(gym.Env):
         # TODO: don't hardcode the ports (have ue start game binary)
         self.ue = Communicator("127.0.0.1", 7447, 7001)
 
+        try:
+            self.ue.get_project_name()
+        except TimeoutError:
+            print("Start the UE game binary first.")
+            raise SystemExit
+
         self.episode = 0
         self.reset()
 
@@ -52,13 +58,14 @@ class BoxWorldEnv(gym.Env):
     def _get_obs(self):
         # TODO: don't hardcode the directory
 
-        output_dir = Path("images")
+        output_dir = Path("images").absolute()
         image_filename = output_dir / f"{self.episode:02}-{self.step:04}.png"
+        image_filename_str = str(image_filename)
 
         if not output_dir.exists():
             output_dir.mkdir()
 
-        self.ue.save_image(image_filename)
+        self.ue.save_image(image_filename_str)
 
         # TODO: find a better way to determine the exact time to wait
         # For example, loop until the file exists (file will exist on creation not being filled)
@@ -67,6 +74,8 @@ class BoxWorldEnv(gym.Env):
         # TODO: maybe convert to numpy array before returning
         image = Image.open(image_filename)
         return image
+        # TODO: also return location?
+        # return {"agent": self._agent_location, "target": self._target_location}
 
     def _get_info(self):
         # NOTE: we may want to return more information (e.g., position)
@@ -75,6 +84,10 @@ class BoxWorldEnv(gym.Env):
     def reset(self, seed=None, options=None):
         # Super class (gym.Env) resets for us self.np_random
         super().reset(seed=seed)
+
+        # TODO: find better values
+        self.translation_magnitude = 1
+        self.rotation_magnitude = 8
 
         # TODO: check filename to find next episode number
         self.episode += 1
@@ -96,6 +109,18 @@ class BoxWorldEnv(gym.Env):
         return observation, info
 
     def step(self, action):
+
+        match action:
+            case 0:
+                self.ue.move_forward(self.translation_magnitude)
+            case 1:
+                self.ue.move_backward(self.translation_magnitude)
+            case 2:
+                self.ue.rotate_left(self.rotation_magnitude)
+            case 3:
+                self.ue.rotate_right(self.rotation_magnitude)
+            case _:
+                raise RuntimeError("Invalid code path.")
 
         observation = self._get_obs()
         info = self._get_info()
