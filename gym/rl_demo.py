@@ -12,7 +12,9 @@ env = BoxWorldEnv()
 # Reset the environment
 observation, info = env.reset(seed=42)
 
-for _ in range(1000):
+NUM_STEPS = 4
+
+for _ in range(NUM_STEPS):
 
     # Select a random action
     action = env.action_space.sample()
