@@ -3,8 +3,6 @@ Following this tutorial:
 https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/
 """
 
-# NOTE: for next time
-# - continue ue5osc interface
 
 # TODO: add dependencies to readme
 # - gymnasium
@@ -13,13 +11,17 @@ https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/
 # - ue5osc
 # - specific python version?
 
+from pathlib import Path
+from time import sleep
 
 import gymnasium as gym
 from gymnasium import spaces
 
+from PIL import Image
+
 import numpy as np
 
-from ue5osc import Communicator, start_ue
+from ue5osc import Communicator
 
 class BoxWorldEnv(gym.Env):
 
@@ -28,19 +30,14 @@ class BoxWorldEnv(gym.Env):
     # TODO: what is a good FPS? FPS is really controlled by UE
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
-    # TODO: initialize with shape of saved images
+    # TODO: initialize with shape of saved images (set resolution)
     def __init__(self):
-        # TODO: don't hardcode the ports
+        # TODO: don't hardcode the ports (have ue start game binary)
         self.ue = Communicator("127.0.0.1", 7447, 7001)
 
-        # TODO: start UE game binary
+        self.episode = 0
+        self.reset()
 
-        # TODO: call reset and change settings in game
-        # .reset()
-        # .set_resolution(...)
-
-        # The 'agent' observes an image rendered by UE
-        # TODO: where do we set the image resolution
         self.observation_space = spaces.Box(
             low=0, high=255, shape=(500, 700, 3), dtype=np.uint8
         )
@@ -51,17 +48,45 @@ class BoxWorldEnv(gym.Env):
         # TODO: hardcode for now (until we figure out UE headless mode)
         self.render_mode = "rgb_array"
 
+
     def _get_obs(self):
-        pass
+        # TODO: don't hardcode the directory
+
+        output_dir = Path("images")
+        image_filename = output_dir / f"{self.episode:02}-{self.step:04}.png"
+
+        if not output_dir.exists():
+            output_dir.mkdir()
+
+        self.ue.save_image(image_filename)
+
+        # TODO: find a better way to determine the exact time to wait
+        # For example, loop until the file exists (file will exist on creation not being filled)
+        sleep(0.5)
+
+        # TODO: maybe convert to numpy array before returning
+        image = Image.open(image_filename)
+        return image
 
     def _get_info(self):
-        pass
+        # NOTE: we may want to return more information (e.g., position)
+        return None
 
     def reset(self, seed=None, options=None):
         # Super class (gym.Env) resets for us self.np_random
         super().reset(seed=seed)
 
+        # TODO: check filename to find next episode number
+        self.episode += 1
+        self.step = 1
+
         self.ue.reset()
+
+        # TODO:
+        # .set_resolution(...)
+        # .set_raycast_length(...)
+        # .set_quality(...)
+        # set to 1st person camera view
 
         observation = self._get_obs()
         info = self._get_info()
@@ -75,7 +100,10 @@ class BoxWorldEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
 
-        # TODO: use ue.get_location() and compare with known end location
+        # TODO:
+        # - use ue.get_location() and compare with known end location
+        # - or add ue.get_distance_to_target() (requires path planning in UE)
+        # - ***or use boxenv to get distance to target
         terminated = False
 
         reward = 1 if terminated else 0
@@ -89,6 +117,5 @@ class BoxWorldEnv(gym.Env):
         raise NotImplementedError
 
     def close(self):
-        # Close OSC
-        # Close UE game binary?
-        raise NotImplementedError
+        # TODO: Close UE game binary? (handle in ue5osc?)
+        self.ue.close_osc()
