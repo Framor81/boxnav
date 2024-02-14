@@ -39,7 +39,7 @@ class BoxEnv:
                     box.origin,
                     box.width,
                     box.height,
-                    box.angle_degrees,
+                    angle=box.angle_degrees,
                     facecolor="blue",
                     alpha=0.5,
                 )

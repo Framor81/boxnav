@@ -444,7 +444,7 @@ class TeleportingNavigator(BoxNavigatorBase):
                 self.ahead_box.origin,
                 self.ahead_box.width,
                 self.ahead_box.height,
-                self.ahead_box.angle_degrees,
+                angle=self.ahead_box.angle_degrees,
                 facecolor="orange",  # Color of the rectangle
                 alpha=0.6,  # Transparency level of the rectangle
             )
@@ -461,7 +461,7 @@ class TeleportingNavigator(BoxNavigatorBase):
                     self.temp_box.origin,
                     self.temp_box.width,
                     self.temp_box.height,
-                    self.temp_box.angle_degrees,
+                    angle=self.temp_box.angle_degrees,
                     facecolor="yellow",  # Color of the rectangle
                     alpha=0.6,  # Transparency level of the rectangle
                 )
