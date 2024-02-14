@@ -90,18 +90,18 @@ def simulate(args: Namespace, trial_num: int) -> None:
         except TimeoutError as e:
             print(e)
             if is_ue_navigator:
-                agent.ue5.close_osc()
+                agent.ue.close_osc()
             raise SystemExit
         except Exception as e:
             print(e)
             if is_ue_navigator:
-                agent.ue5.close_osc()
+                agent.ue.close_osc()
             raise SystemExit
 
         if is_ue_navigator:
             if agent.num_actions_taken() % 20 == 0 and args.randomize:
                 random_surface = random.choice(list(TexturedSurface))
-                agent.ue5.set_texture(random_surface, randrange(42))
+                agent.ue.set_texture(random_surface, randrange(42))
 
         if args.anim_ext:
             # TODO: Rotate axis so that agent is always facing up
@@ -111,7 +111,7 @@ def simulate(args: Namespace, trial_num: int) -> None:
             camera.snap()
 
     if isinstance(agent, UENavigatorWrapper):
-        agent.ue5.close_osc()
+        agent.ue.close_osc()
 
     print("Simulation complete.", end=" ")
 
@@ -172,7 +172,7 @@ def main():
     )
 
     argparser.add_argument(
-        "--resolution", type=str, help="Set resolution of images as ResXxResY."
+        "--resolution", type=str, default="244x244", help="Set resolution of images as ResXxResY."
     )
 
     argparser.add_argument(
@@ -224,9 +224,6 @@ def main():
 
     if args.save_images:
         args.ue = True
-
-    if args.resolution and not args.ue:
-        raise ValueError("Resolution is unnecessary without Unreal Engine.")
 
     if args.save_images:
         check_path(args.save_images)
