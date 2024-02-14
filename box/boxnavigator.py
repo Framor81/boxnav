@@ -189,6 +189,7 @@ class BoxNavigatorBase:
             self.anchor_1 = self.rotation_anchor(self.target, self.current_box)[0]
             self.anchor_2 = self.rotation_anchor(self.target, self.current_box)[1]
 
+    # TODO: consider moving this method to the subclass
     def teleport(self) -> None:
         # Teleport to a random point with a random rotation
         if isinstance(self, TeleportingNavigator):
