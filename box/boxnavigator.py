@@ -353,7 +353,8 @@ class TeleportingNavigator(BoxNavigatorBase):
         # Give variables more descriptive names
         self.possible_actions = [Action.TELEPORT]
 
-        self.ahead_box = ahead_box
+        # self.ahead_box = ahead_box
+        self.set_ahead_box()
         self.counter = 0
         self.box_size = 50
         self.pause_box = False
@@ -361,8 +362,9 @@ class TeleportingNavigator(BoxNavigatorBase):
     def navigator_specific_action(self) -> Action:
         return Action.TELEPORT
 
-    def draw_rectangle_ahead(self, ax: plt.Axes, scale: float) -> None:
-        """Draw a rectangle ahead of the agent's current location."""
+    # TODO: note sure if this function is needed, currently putting it here so that we can collect
+    # images without saving an animation.
+    def set_ahead_box(self) -> None:
         # If not the first action set a temporary box
         if self.counter != 1:
             self.temp_box = self.ahead_box
@@ -438,6 +440,11 @@ class TeleportingNavigator(BoxNavigatorBase):
         if self.counter != 1 and self.pause_box:
             self.ahead_box = self.temp_box
         # print(self.ahead_box)
+
+    def draw_rectangle_ahead(self, ax: plt.Axes, scale: float) -> None:
+        """Draw a rectangle ahead of the agent's current location."""
+
+        self.set_ahead_box()
 
         # Add the rectangle patch to the plot
         ax.add_patch(
