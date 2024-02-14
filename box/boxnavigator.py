@@ -2,7 +2,6 @@ from enum import Enum
 from math import atan2, cos, degrees, radians, sin
 from random import choice, random, uniform
 
-import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.patches import Arrow, Rectangle, Wedge
 
@@ -155,7 +154,7 @@ class BoxNavigatorBase:
 
         return dominant_direction
 
-    def rotation_anchor(self, current_target: Pt, current_box: Box) -> [Pt]:
+    def rotation_anchor(self, current_target: Pt, current_box: Box) -> list[Pt]:
         width_half = current_box.width / 2
         height_half = current_box.height / 2
 
@@ -199,15 +198,17 @@ class BoxNavigatorBase:
         )
         self.rotation = random_angle
 
-    def move_forward(self) -> None:
+    def move_forward(self) -> bool:
         """Move forward by a fixed amount."""
         new_x = self.position.x + self.movement_increment * cos(self.rotation)
         new_y = self.position.y + self.movement_increment * sin(self.rotation)
         if self.can_move_to_point(Pt(new_x, new_y)):
             self.checked_move(Pt(new_x, new_y))
             return True
+        else:
+            return False
 
-    def move_backward(self) -> None:
+    def move_backward(self) -> bool:
         """Move backward by a fixed amount."""
         new_x = self.position.x - self.movement_increment * cos(self.rotation)
         new_y = self.position.y - self.movement_increment * sin(self.rotation)
