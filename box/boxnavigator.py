@@ -3,6 +3,7 @@ from math import atan2, cos, degrees, radians, sin
 from random import choice, random, uniform
 
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 from matplotlib.patches import Arrow, Rectangle, Wedge
 
 from .box import Box, Pt, close_enough
@@ -236,7 +237,7 @@ class BoxNavigatorBase:
         """Rotate to the left by a set amount."""
         self.rotation += self.rotation_increment
 
-    def display(self, ax: plt.Axes, scale: float) -> None:
+    def display(self, ax: Axes, scale: float) -> None:
         """Plot the agent to the given axis.
 
         Args:
