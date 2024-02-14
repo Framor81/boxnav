@@ -93,7 +93,7 @@ class BoxNavigatorBase:
     def num_actions_taken(self) -> int:
         return self.actions_taken
 
-    def take_action(self) -> tuple[Action, Action]:
+    def take_action(self) -> tuple[Action, Action, bool]:
         """Execute a single action in the environment.
 
         Returns:
