@@ -191,12 +191,15 @@ class BoxNavigatorBase:
 
     def teleport(self) -> None:
         # Teleport to a random point with a random rotation
-        random_point = self.random_point_within_teleport_region()
-        self.checked_move(random_point)
-        random_angle = self.random_rotation_within_target_cone(
-            self.anchor_1, self.anchor_2
-        )
-        self.rotation = random_angle
+        if isinstance(self, TeleportingNavigator):
+            random_point = self.random_point_within_teleport_region()
+            self.checked_move(random_point)
+            random_angle = self.random_rotation_within_target_cone(
+                self.anchor_1, self.anchor_2
+            )
+            self.rotation = random_angle
+        else:
+            raise NotImplementedError("TeleportingNavigator is not being used.")
 
     def move_forward(self) -> bool:
         """Move forward by a fixed amount."""
