@@ -156,11 +156,11 @@ class UENavigatorWrapper:
         return action_taken, correct_action
 
     def save_image(self, action: Action) -> None:
-        # Rotations are swapped in UE
-        if action == Action.ROTATE_LEFT:
-            action = Action.ROTATE_RIGHT
-        elif action == Action.ROTATE_RIGHT:
-            action = Action.ROTATE_LEFT
+        # # Rotations are swapped in UE
+        # if action == Action.ROTATE_LEFT:
+        #     action = Action.ROTATE_RIGHT
+        # elif action == Action.ROTATE_RIGHT:
+        #     action = Action.ROTATE_LEFT
 
         # Generate the next filename
         # Negative because unreal using a left-hand coordinate system
@@ -169,6 +169,8 @@ class UENavigatorWrapper:
             f"{self.dataset_path}/"
             f"{self.trial_num:03}_{self.images_saved:06}_{angle}.{str(self.image_ext).lower()}"
         )
+
+        # print(image_filepath)
 
         self.images_saved += 1
 
