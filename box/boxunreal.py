@@ -54,14 +54,19 @@ class UENavigatorWrapper:
 
         if resolution:
             self.ue.set_resolution(resolution)
+            # NOTE: we need to wait for the resolution to change before sending another command
+            # TODO: this should probably be done inside the Communicator
+            sleep(1)
 
+        # TODO: do we need to wait for the quality level to change?
         self.ue.set_quality(quality_level)
+
+        # NOTE: we need to sleep after a reset to give UE time to update the scene
         self.reset()
-        """This sleep is included because in certain runs where you have more than one
-        trial sometimes the reset can't keep up because it is still saving images, so
-        the sleep ensures it has time to reset before more pictures are taken """
         sleep(1)
+
         # We set the raycast length here to ensure the checked movement forward is being correctly compared.
+        # TODO: do we need to wait for the raycast length to change?
         self.ue.set_raycast_length(self.raycast_length)
 
     def reset(self) -> None:
