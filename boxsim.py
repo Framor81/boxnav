@@ -76,6 +76,8 @@ def simulate(args: Namespace, trial_num: int) -> None:
             args.image_ext,
             trial_num,
             args.movement_increment,
+            args.resolution,
+            # TODO: add quality level as a command line argument?
         )
 
     is_ue_navigator = isinstance(agent, UENavigatorWrapper)

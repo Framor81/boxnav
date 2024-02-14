@@ -20,6 +20,7 @@ class UENavigatorWrapper:
         image_ext: str,
         trial_num: int,
         movement_increment: float,
+        resolution: str,
         quality_level: int = 1,
     ) -> None:
         self.ue = Communicator("127.0.0.1", ue_server_port, py_server_port)
@@ -50,6 +51,9 @@ class UENavigatorWrapper:
                 "Check if UE packaged game is running.",
             )
             raise SystemExit
+
+        if resolution:
+            self.ue.set_resolution(resolution)
 
         self.ue.set_quality(quality_level)
         self.reset()
