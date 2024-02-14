@@ -500,6 +500,13 @@ class TeleportingNavigator(BoxNavigatorBase):
             return random_pt
 
     def random_rotation_within_target_cone(self, anchor_1: Pt, anchor_2: Pt) -> float:
+        random_x = uniform(anchor_1.x, anchor_2.x)
+        random_y = uniform(anchor_1.y, anchor_2.y)
+        angle = atan2(random_y - self.position.y, random_x - self.position.x)
+        # return angle
+
+
+        # TODO: I think this logic is wrong. Shouldn't the target always be inside the current box?
         if self.current_box.point_is_inside(self.target):
             # If the target is inside the current box, calculate the angle to the target
             # this is in order to prevent confusing directions where we may face away from the target
