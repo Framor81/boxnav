@@ -3,9 +3,9 @@ from math import atan2, cos, degrees, radians, sin
 from random import choice, random, uniform
 
 import matplotlib.pyplot as plt
-from matplotlib.patches import Arrow, Wedge, Rectangle
+from matplotlib.patches import Arrow, Rectangle, Wedge
 
-from .box import Pt, close_enough, Box
+from .box import Box, Pt, close_enough
 from .boxenv import BoxEnv
 
 
@@ -191,7 +191,7 @@ class BoxNavigatorBase:
 
     def teleport(self) -> None:
         # Teleport to a random point with a random rotation
-        random_point = self.random_point_withing_teleport_region()
+        random_point = self.random_point_within_teleport_region()
         self.checked_move(random_point)
         random_angle = self.random_rotation_within_target_cone(
             self.anchor_1, self.anchor_2
@@ -467,7 +467,7 @@ class TeleportingNavigator(BoxNavigatorBase):
                 )
             )
 
-    def random_point_withing_teleport_region(
+    def random_point_within_teleport_region(
         self,
     ) -> Pt:  # Generate random x and y coords within the box's bounds
         self.counter += 1
