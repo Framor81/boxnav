@@ -241,7 +241,7 @@ class BoxNavigatorBase:
         """Plot the agent to the given axis.
 
         Args:
-            ax (plt.Axes): axis for plotting
+            ax (Axes): axis for plotting
             scale (float): scale of arrows and wedge
         """
 
@@ -340,7 +340,7 @@ class TeleportingNavigator(BoxNavigatorBase):
         distance_threshold: int,
         forward_increment: float,
         rotation_increment: float,
-        ahead_box=None,
+        # ahead_box=None,
     ) -> None:
         super().__init__(
             position,
@@ -353,10 +353,11 @@ class TeleportingNavigator(BoxNavigatorBase):
         # Give variables more descriptive names
         self.possible_actions = [Action.TELEPORT]
 
-        # self.ahead_box = ahead_box
+        # self.ahead_box = None
+        self.counter = 1
+        self.box_size = 50
         self.set_ahead_box()
         self.counter = 0
-        self.box_size = 50
         self.pause_box = False
 
     def navigator_specific_action(self) -> Action:
@@ -365,6 +366,10 @@ class TeleportingNavigator(BoxNavigatorBase):
     # TODO: note sure if this function is needed, currently putting it here so that we can collect
     # images without saving an animation.
     def set_ahead_box(self) -> None:
+
+        # TODO: don't hardcode this...
+        scale = 300
+
         # If not the first action set a temporary box
         if self.counter != 1:
             self.temp_box = self.ahead_box
@@ -441,7 +446,7 @@ class TeleportingNavigator(BoxNavigatorBase):
             self.ahead_box = self.temp_box
         # print(self.ahead_box)
 
-    def draw_rectangle_ahead(self, ax: plt.Axes, scale: float) -> None:
+    def draw_rectangle_ahead(self, ax: Axes, scale: float) -> None:
         """Draw a rectangle ahead of the agent's current location."""
 
         self.set_ahead_box()
@@ -458,7 +463,7 @@ class TeleportingNavigator(BoxNavigatorBase):
             )
         )
 
-    def draw_current_past_rectangle(self, ax: plt.Axes, scale: float) -> None:
+    def draw_current_past_rectangle(self, ax: Axes, scale: float) -> None:
         """Draw a rectangle ahead of the agent's current location and it's current box."""
         if self.counter == 1:
             self.draw_rectangle_ahead(ax, scale)
