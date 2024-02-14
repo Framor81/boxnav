@@ -1,11 +1,12 @@
 import random
-from argparse import ArgumentParser, Namespace
+from argparse import ArgumentParser, BooleanOptionalAction, Namespace
 from math import radians
 from pathlib import Path
 from random import randrange
 
 import matplotlib.pyplot as plt
 from celluloid import Camera
+from tqdm import tqdm
 from ue5osc import TexturedSurface
 
 from box.box import Pt, aligned_box
@@ -84,9 +85,17 @@ def simulate(args: Namespace, trial_num: int) -> None:
 
     fig, ax = plt.subplots()
     camera = Camera(fig)
-    while not agent.stuck and (
-        not agent.at_final_target() and agent.num_actions_taken() < args.max_actions
-    ):
+
+    for _ in tqdm(range(args.max_actions)):
+    # while not agent.stuck and (
+    #     not agent.at_final_target() and agent.num_actions_taken() < args.max_actions
+    # ):
+        if agent.stuck:
+            break
+
+        if agent.at_final_target():
+            break
+
         try:
             _ = agent.take_action()
         except TimeoutError as e:
@@ -213,6 +222,7 @@ def main():
         "--randomize",
         type=bool,
         default=True,
+        action=BooleanOptionalAction,
         help="Randomizes the texture of the walls, floors, and ceilings.",
     )
 
