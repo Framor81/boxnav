@@ -1,8 +1,8 @@
+import random
 from argparse import ArgumentParser, Namespace
 from math import radians
 from pathlib import Path
 from random import randrange
-import random
 
 import matplotlib.pyplot as plt
 from celluloid import Camera
@@ -10,7 +10,7 @@ from ue5osc import TexturedSurface
 
 from box.box import Pt, aligned_box
 from box.boxenv import BoxEnv
-from box.boxnavigator import PerfectNavigator, WanderingNavigator, TeleportingNavigator
+from box.boxnavigator import PerfectNavigator, TeleportingNavigator, WanderingNavigator
 from box.boxunreal import UENavigatorWrapper
 
 # TODO: this should probably be a command line argument (pass in a list of coordinates)
@@ -78,6 +78,8 @@ def simulate(args: Namespace, trial_num: int) -> None:
             args.movement_increment,
         )
 
+    is_ue_navigator = isinstance(agent, UENavigatorWrapper)
+
     fig, ax = plt.subplots()
     camera = Camera(fig)
     while not agent.stuck and (
@@ -87,18 +89,19 @@ def simulate(args: Namespace, trial_num: int) -> None:
             _ = agent.take_action()
         except TimeoutError as e:
             print(e)
-            if isinstance(agent, UENavigatorWrapper):
+            if is_ue_navigator:
+                agent.ue5.close_osc()
+            raise SystemExit
+        except Exception as e:
+            print(e)
+            if is_ue_navigator:
                 agent.ue5.close_osc()
             raise SystemExit
 
-        if isinstance(agent, UENavigatorWrapper):
+        if is_ue_navigator:
             if agent.num_actions_taken() % 20 == 0 and args.randomize:
                 random_surface = random.choice(list(TexturedSurface))
                 agent.ue5.set_texture(random_surface, randrange(42))
-
-        # except ValueError as e:
-        #     print(e)
-        #     break
 
         if args.anim_ext:
             # TODO: Rotate axis so that agent is always facing up
