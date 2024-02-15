@@ -4,8 +4,8 @@ from time import sleep
 
 from ue5osc import Communicator
 
-from .boxnavigator import Action, BoxNavigatorBase
 from .box import Pt
+from .boxnavigator import Action, BoxNavigatorBase
 
 
 class UENavigatorWrapper:
@@ -20,9 +20,10 @@ class UENavigatorWrapper:
         image_ext: str,
         trial_num: int,
         movement_increment: float,
+        resolution: str,
         quality_level: int = 1,
     ) -> None:
-        self.ue5 = Communicator("127.0.0.1", ue_server_port, py_server_port)
+        self.ue = Communicator("127.0.0.1", ue_server_port, py_server_port)
 
         self.navigator = navigator
         self.dataset_path = Path(dataset_path).resolve() if dataset_path else None
@@ -44,25 +45,33 @@ class UENavigatorWrapper:
             self.sync_positions()
             self.sync_rotation()
         except TimeoutError:
-            self.ue5.close_osc()
+            self.ue.close_osc()
             print(
                 "Received Timeout Error from OSC Communicator.",
                 "Check if UE packaged game is running.",
             )
             raise SystemExit
 
-        self.ue5.set_quality(quality_level)
+        if resolution:
+            self.ue.set_resolution(resolution)
+            # NOTE: we need to wait for the resolution to change before sending another command
+            # TODO: this should probably be done inside the Communicator
+            sleep(1)
+
+        # TODO: do we need to wait for the quality level to change?
+        self.ue.set_quality(quality_level)
+
+        # NOTE: we need to sleep after a reset to give UE time to update the scene
         self.reset()
-        """This sleep is included because in certain runs where you have more than one
-        trial sometimes the reset can't keep up because it is still saving images, so
-        the sleep ensures it has time to reset before more pictures are taken """
         sleep(1)
+
         # We set the raycast length here to ensure the checked movement forward is being correctly compared.
-        self.ue5.set_raycast_length(self.raycast_length)
+        # TODO: do we need to wait for the raycast length to change?
+        self.ue.set_raycast_length(self.raycast_length)
 
     def reset(self) -> None:
         """Resets agent to its initial position."""
-        return self.ue5.reset()
+        return self.ue.reset()
 
     def __getattr__(self, attr):
         """Dispatch unknown method calls to navigator object."""
@@ -72,16 +81,16 @@ class UENavigatorWrapper:
         """Move UE agent to match boxsim agent."""
 
         # Get z position from UE
-        _, _, unreal_z = self.ue5.get_location()
+        _, _, unreal_z = self.ue.get_location()
 
         # Get x, y position from boxsim
         x, y = self.navigator.position.xy()
 
-        self.ue5.set_location(x, y, unreal_z)
+        self.ue.set_location(x, y, unreal_z)
 
     def sync_box_position_to_unreal(self) -> None:
         """Move Boxsim agent to match Unreal Agent Position"""
-        unrealX, unrealY, _ = self.ue5.get_location()
+        unrealX, unrealY, _ = self.ue.get_location()
         target = Pt(unrealX, unrealY)
         self.navigator.position = target
 
@@ -89,7 +98,7 @@ class UENavigatorWrapper:
         """Sync UE agent location to box agent."""
         # Conversion from Box to unreal location is (180 - boxYaw) = unrealYaw
         unreal_yaw: float = degrees(self.navigator.rotation)
-        self.ue5.set_yaw(unreal_yaw)
+        self.ue.set_yaw(unreal_yaw)
 
     def take_action(self) -> tuple[Action, Action]:
         """Execute action in the navigator and in the UE agent.
@@ -120,20 +129,20 @@ class UENavigatorWrapper:
             we'll set the stuck flag to True which will stop this trial early."""
             self.num_stationary_moves += 1
             if valid_movement is not False:
-                raycast = self.ue5.get_raycast_distance()
+                raycast = self.ue.get_raycast_distance()
 
                 # Checks and sets a flag if we are stuck unable to move forward.
                 self.stuck = self.num_stationary_moves >= 10
                 # Sometimes large increments will hit the wall the target is on
                 if raycast == 0:
-                    self.ue5.move_forward(self.navigator.movement_increment)
+                    self.ue.move_forward(self.navigator.movement_increment)
                     self.sync_box_position_to_unreal()
                     self.num_stationary_moves = 0
             else:
                 # In case an invalid move also causes to get stuck we are able to reset
                 self.stuck = self.num_stationary_moves >= 10
         elif action_taken == Action.BACKWARD:
-            self.ue5.move_backward(self.navigator.movement_increment)
+            self.ue.move_backward(self.navigator.movement_increment)
         elif action_taken == Action.ROTATE_LEFT:
             self.sync_rotation()
         elif action_taken == Action.ROTATE_RIGHT:
@@ -147,11 +156,11 @@ class UENavigatorWrapper:
         return action_taken, correct_action
 
     def save_image(self, action: Action) -> None:
-        # Rotations are swapped in UE
-        if action == Action.ROTATE_LEFT:
-            action = Action.ROTATE_RIGHT
-        elif action == Action.ROTATE_RIGHT:
-            action = Action.ROTATE_LEFT
+        # # Rotations are swapped in UE
+        # if action == Action.ROTATE_LEFT:
+        #     action = Action.ROTATE_RIGHT
+        # elif action == Action.ROTATE_RIGHT:
+        #     action = Action.ROTATE_LEFT
 
         # Generate the next filename
         # Negative because unreal using a left-hand coordinate system
@@ -161,10 +170,12 @@ class UENavigatorWrapper:
             f"{self.trial_num:03}_{self.images_saved:06}_{angle}.{str(self.image_ext).lower()}"
         )
 
+        # print(image_filepath)
+
         self.images_saved += 1
 
         # Let teleport complete, save the image, then wait for image save
         sleep(0.25)
-        self.ue5.save_image(image_filepath)
+        self.ue.save_image(image_filepath)
         # TODO: maybe loop until the image exists?
         sleep(0.25)

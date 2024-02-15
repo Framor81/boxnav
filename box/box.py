@@ -104,6 +104,7 @@ class Box:
     def __init__(self, lower_left: Pt, upper_left: Pt, upper_right: Pt, target: Pt):
         """Create a arbitrarily rotated box.
 
+        # TODO: descriptions are wrong, fix them
         Args:
             lower_left (Pt): lower left origin point
             upper_left (Pt): next point clockwise (Upper left)

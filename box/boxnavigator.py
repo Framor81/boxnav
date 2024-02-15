@@ -2,10 +2,10 @@ from enum import Enum
 from math import atan2, cos, degrees, radians, sin
 from random import choice, random, uniform
 
-import matplotlib.pyplot as plt
-from matplotlib.patches import Arrow, Wedge, Rectangle
+from matplotlib.axes import Axes
+from matplotlib.patches import Arrow, Rectangle, Wedge
 
-from .box import Pt, close_enough, Box
+from .box import Box, Pt, close_enough
 from .boxenv import BoxEnv
 
 
@@ -93,7 +93,7 @@ class BoxNavigatorBase:
     def num_actions_taken(self) -> int:
         return self.actions_taken
 
-    def take_action(self) -> tuple[Action, Action]:
+    def take_action(self) -> tuple[Action, Action, bool]:
         """Execute a single action in the environment.
 
         Returns:
@@ -154,7 +154,7 @@ class BoxNavigatorBase:
 
         return dominant_direction
 
-    def rotation_anchor(self, current_target: Pt, current_box: Box) -> [Pt]:
+    def rotation_anchor(self, current_target: Pt, current_box: Box) -> list[Pt]:
         width_half = current_box.width / 2
         height_half = current_box.height / 2
 
@@ -189,24 +189,30 @@ class BoxNavigatorBase:
             self.anchor_1 = self.rotation_anchor(self.target, self.current_box)[0]
             self.anchor_2 = self.rotation_anchor(self.target, self.current_box)[1]
 
+    # TODO: consider moving this method to the subclass
     def teleport(self) -> None:
         # Teleport to a random point with a random rotation
-        random_point = self.random_point_withing_teleport_region()
-        self.checked_move(random_point)
-        random_angle = self.random_rotation_within_target_cone(
-            self.anchor_1, self.anchor_2
-        )
-        self.rotation = random_angle
+        if isinstance(self, TeleportingNavigator):
+            random_point = self.random_point_within_teleport_region()
+            self.checked_move(random_point)
+            random_angle = self.random_rotation_within_target_cone(
+                self.anchor_1, self.anchor_2
+            )
+            self.rotation = random_angle
+        else:
+            raise NotImplementedError("TeleportingNavigator is not being used.")
 
-    def move_forward(self) -> None:
+    def move_forward(self) -> bool:
         """Move forward by a fixed amount."""
         new_x = self.position.x + self.movement_increment * cos(self.rotation)
         new_y = self.position.y + self.movement_increment * sin(self.rotation)
         if self.can_move_to_point(Pt(new_x, new_y)):
             self.checked_move(Pt(new_x, new_y))
             return True
+        else:
+            return False
 
-    def move_backward(self) -> None:
+    def move_backward(self) -> bool:
         """Move backward by a fixed amount."""
         new_x = self.position.x - self.movement_increment * cos(self.rotation)
         new_y = self.position.y - self.movement_increment * sin(self.rotation)
@@ -236,11 +242,11 @@ class BoxNavigatorBase:
         """Rotate to the left by a set amount."""
         self.rotation += self.rotation_increment
 
-    def display(self, ax: plt.Axes, scale: float) -> None:
+    def display(self, ax: Axes, scale: float) -> None:
         """Plot the agent to the given axis.
 
         Args:
-            ax (plt.Axes): axis for plotting
+            ax (Axes): axis for plotting
             scale (float): scale of arrows and wedge
         """
 
@@ -339,7 +345,7 @@ class TeleportingNavigator(BoxNavigatorBase):
         distance_threshold: int,
         forward_increment: float,
         rotation_increment: float,
-        ahead_box=None,
+        # ahead_box=None,
     ) -> None:
         super().__init__(
             position,
@@ -352,16 +358,23 @@ class TeleportingNavigator(BoxNavigatorBase):
         # Give variables more descriptive names
         self.possible_actions = [Action.TELEPORT]
 
-        self.ahead_box = ahead_box
-        self.counter = 0
+        # self.ahead_box = None
+        self.counter = 1
         self.box_size = 50
+        self.set_ahead_box()
+        self.counter = 0
         self.pause_box = False
 
     def navigator_specific_action(self) -> Action:
         return Action.TELEPORT
 
-    def draw_rectangle_ahead(self, ax: plt.Axes, scale: float) -> None:
-        """Draw a rectangle ahead of the agent's current location."""
+    # TODO: note sure if this function is needed, currently putting it here so that we can collect
+    # images without saving an animation.
+    def set_ahead_box(self) -> None:
+
+        # TODO: don't hardcode this...
+        scale = 300
+
         # If not the first action set a temporary box
         if self.counter != 1:
             self.temp_box = self.ahead_box
@@ -438,19 +451,24 @@ class TeleportingNavigator(BoxNavigatorBase):
             self.ahead_box = self.temp_box
         # print(self.ahead_box)
 
+    def draw_rectangle_ahead(self, ax: Axes, scale: float) -> None:
+        """Draw a rectangle ahead of the agent's current location."""
+
+        self.set_ahead_box()
+
         # Add the rectangle patch to the plot
         ax.add_patch(
             Rectangle(
                 self.ahead_box.origin,
                 self.ahead_box.width,
                 self.ahead_box.height,
-                self.ahead_box.angle_degrees,
+                angle=self.ahead_box.angle_degrees,
                 facecolor="orange",  # Color of the rectangle
                 alpha=0.6,  # Transparency level of the rectangle
             )
         )
 
-    def draw_current_past_rectangle(self, ax: plt.Axes, scale: float) -> None:
+    def draw_current_past_rectangle(self, ax: Axes, scale: float) -> None:
         """Draw a rectangle ahead of the agent's current location and it's current box."""
         if self.counter == 1:
             self.draw_rectangle_ahead(ax, scale)
@@ -461,13 +479,13 @@ class TeleportingNavigator(BoxNavigatorBase):
                     self.temp_box.origin,
                     self.temp_box.width,
                     self.temp_box.height,
-                    self.temp_box.angle_degrees,
+                    angle=self.temp_box.angle_degrees,
                     facecolor="yellow",  # Color of the rectangle
                     alpha=0.6,  # Transparency level of the rectangle
                 )
             )
 
-    def random_point_withing_teleport_region(
+    def random_point_within_teleport_region(
         self,
     ) -> Pt:  # Generate random x and y coords within the box's bounds
         self.counter += 1
@@ -482,7 +500,15 @@ class TeleportingNavigator(BoxNavigatorBase):
             return random_pt
 
     def random_rotation_within_target_cone(self, anchor_1: Pt, anchor_2: Pt) -> float:
-        if self.current_box.point_is_inside(self.target):
+        random_x = uniform(anchor_1.x, anchor_2.x)
+        random_y = uniform(anchor_1.y, anchor_2.y)
+        angle = atan2(random_y - self.position.y, random_x - self.position.x)
+        return angle
+
+        # TODO: I think this logic is wrong. Shouldn't the target always be inside the current box?
+        # TODO: I am not sure this update is correct either
+        # if self.current_box.point_is_inside(self.target):
+        if self.ahead_box.point_is_inside(self.target):
             # If the target is inside the current box, calculate the angle to the target
             # this is in order to prevent confusing directions where we may face away from the target
             angle = atan2(

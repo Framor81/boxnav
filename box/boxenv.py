@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 from matplotlib.patches import Rectangle
 
 from .box import Box, Pt
@@ -31,7 +31,7 @@ class BoxEnv:
         """Returns a list of the boxes enclosing the given point."""
         return [box for box in self.boxes if box.point_is_inside(pt)]
 
-    def display(self, ax: plt.Axes) -> None:
+    def display(self, ax: Axes) -> None:
         """Draw all boxes to the given axis."""
         for box in self.boxes:
             ax.add_patch(
@@ -39,7 +39,7 @@ class BoxEnv:
                     box.origin,
                     box.width,
                     box.height,
-                    box.angle_degrees,
+                    angle=box.angle_degrees,
                     facecolor="blue",
                     alpha=0.5,
                 )
