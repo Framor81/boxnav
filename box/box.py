@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from math import atan2, degrees, sqrt
+from math import atan2, degrees, sqrt, cos, sin
 
 tup2 = tuple[float, float]
 
@@ -9,10 +9,11 @@ Box.py defines a set of classes and functions to work with 2D geometric points (
 This uses a 2D Cartesian coordinate system. 
 """
 
+
 def approx_equal(a: float, b: float, threshold: float = 0.0001) -> bool:
     """
     Compare two floats and return true if they are approximately equal.
-    
+
     Args:
         a (float): first float to compare
         b (float): second float to compare
@@ -101,7 +102,14 @@ class Pt:
 
 
 class Box:
-    def __init__(self, lower_left: Pt, upper_left: Pt, upper_right: Pt, target: Pt):
+    def __init__(
+        self,
+        lower_left: Pt,
+        upper_left: Pt,
+        upper_right: Pt,
+        target: Pt,
+        rotation: float = 0,
+    ):
         """Create a arbitrarily rotated box.
 
         # TODO: descriptions are wrong, fix them
@@ -115,6 +123,11 @@ class Box:
         self.B = upper_left
         self.C = upper_right
         self.target = target
+        self.rotation = rotation
+
+        # if rotation is non-zero this means we want to rotate our square around the origin by a specified amount
+        if self.rotation != 0:
+            self.rotate_box()
 
         self.AB = self.B - self.A
         self.dotAB = Pt.scalar_product(self.AB, self.AB)
@@ -130,7 +143,7 @@ class Box:
         self.origin = (self.left, self.lower)
         self.width = Pt.distance(self.B, self.C)
         self.height = Pt.distance(self.A, self.B)
-        self.angle_degrees = degrees(atan2(self.B.x - self.A.x, self.B.y - self.A.y))
+        self.angle_degrees = degrees(compute_angle_between_points(self.A, self.B))
 
     def point_is_inside(self, M: Pt) -> bool:
         """Determine whether the point is inside of this box."""
@@ -140,21 +153,41 @@ class Box:
             0 <= Pt.scalar_product(self.BC, BM) <= self.dotBC
         )
 
+    def rotate_box(self) -> Box:
+        "Rotates a box around its origin by a given rotation."
+        self.A = rotate_point(self.A, self.rotation)
+        self.B = rotate_point(self.B, self.rotation)
+        self.C = rotate_point(self.C, self.rotation)
+        self.target = rotate_point(self.target, self.rotation)
+
 
 def compute_angle_between_points(A: Pt, B: Pt) -> float:
-    """Compute the angle between two points."""
-    return
+    """Compute the angle between two points (Radians)."""
+    return atan2(B.x - A.x, B.y - A.y)
+
+
+def rotate_point(corner: Pt, rotation: float) -> Pt:
+    """Rotate a point around it's origin by a rotation in radians"""
+    return Pt(
+        corner.x * cos(rotation) - corner.y * sin(rotation),
+        corner.y * cos(rotation) + corner.x * sin(rotation),
+    )
 
 
 def aligned_box(
-    left: float, right: float, lower: float, upper: float, target: tup2
+    left: float,
+    right: float,
+    lower: float,
+    upper: float,
+    target: tup2,
+    rotation: float = 0.0,
 ) -> Box:
     """Create a box aligned with the x and y axes."""
     ll = Pt(left, lower)
     ul = Pt(left, upper)
     ur = Pt(right, upper)
     t = Pt(*target)
-    return Box(ll, ul, ur, t)
+    return Box(ll, ul, ur, t, rotation)
 
 
 if __name__ == "__main__":
