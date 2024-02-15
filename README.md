@@ -55,6 +55,8 @@ python boxsim.py <navigator> --ue
 
 # Runs the navigator in Python and Unreal Engine and generates a dataset
 python boxsim.py <navigator> --save_images 'path/to/dataset'
+
+# ffmpeg.exe -i "%03d.png" video.mp4
 ~~~
 
 ### Note about Command Line Arguments
