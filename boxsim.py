@@ -86,6 +86,23 @@ def simulate(args: Namespace, trial_num: int) -> None:
     fig, ax = plt.subplots()
     camera = Camera(fig)
 
+    """
+    import enlighten
+
+    manager = enlighten.get_manager()
+    trial_bar = manager.counter(total=32, desc="Trial")
+
+    for trial in range(32):
+        step_bar = manager.counter(total=128, desc="Step", leave=False)
+        for step in range(128):
+            time.sleep(0.01)
+            step_bar.update()
+        step_bar.close()
+        print("Trial happened")
+        trial_bar.update()
+
+    manager.stop()
+    """
     for _ in tqdm(range(args.max_actions)):
     # while not agent.stuck and (
     #     not agent.at_final_target() and agent.num_actions_taken() < args.max_actions
