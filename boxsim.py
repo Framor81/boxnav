@@ -17,9 +17,7 @@ from box.boxunreal import UENavigatorWrapper
 # TODO: this should probably be a command line argument (pass in a list of coordinates)
 # route 2, uses path w/ water fountain & stairs
 boxes = [
-    aligned_box(
-        left=4640, right=5240, lower=110, upper=1510, target=(4940, 870), rotation=90
-    ),
+    aligned_box(left=4640, right=5240, lower=110, upper=1510, target=(4940, 870)),
     aligned_box(left=3720, right=5240, lower=700, upper=1040, target=(4000, 870)),
     aligned_box(left=3850, right=4120, lower=360, upper=1040, target=(4000, 400)),
     aligned_box(left=110, right=4120, lower=260, upper=540, target=(255, 400)),
@@ -106,9 +104,9 @@ def simulate(args: Namespace, trial_num: int) -> None:
     manager.stop()
     """
     for _ in tqdm(range(args.max_actions)):
-        # while not agent.stuck and (
-        #     not agent.at_final_target() and agent.num_actions_taken() < args.max_actions
-        # ):
+    # while not agent.stuck and (
+    #     not agent.at_final_target() and agent.num_actions_taken() < args.max_actions
+    # ):
         if agent.stuck:
             break
 
@@ -202,10 +200,7 @@ def main():
     )
 
     argparser.add_argument(
-        "--resolution",
-        type=str,
-        default="244x244",
-        help="Set resolution of images as ResXxResY.",
+        "--resolution", type=str, default="244x244", help="Set resolution of images as ResXxResY."
     )
 
     argparser.add_argument(
